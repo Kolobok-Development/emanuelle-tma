@@ -5,3 +5,80 @@ body {
   padding: 0;
   margin: 0;
 }
+
+.cosmic-background {
+  background: radial-gradient(circle at 20% 80%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 100, 0, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(0, 255, 200, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #1a0033 0%, #0d001a 50%, #001a0d 100%);
+}
+
+.neon-grid-pattern {
+  background-image: linear-gradient(rgba(120, 0, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 0, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(rgba(0, 255, 200, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 200, 0.05) 1px, transparent 1px);
+  background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+  animation: grid-drift 30s linear infinite;
+}
+
+@keyframes grid-drift {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  100% {
+    background-position: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+  }
+}
+
+.fade-bottom {
+  mask: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+  -webkit-mask: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+}
+
+.fade-bottom-50 {
+  mask: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+  -webkit-mask: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+}
+
+
+.cosmic-button {
+  background: linear-gradient(135deg, #7800ff 0%, #ff6400 50%, #00ffc8 100%);
+  background-size: 300% 300%;
+  animation: cosmic-gradient-shift 6s ease infinite;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes cosmic-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.header-gradient {
+  background: radial-gradient(circle at 20% 80%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 100, 0, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(0, 255, 200, 0.2) 0%, transparent 50%),
+    linear-gradient(135deg, #1a0033 0%, #0d001a 30%, #001a0d 100%);
+}
+
+.custom-segmented-control {
+  background: rgba(17, 24, 39, 0.6) !important;
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(147, 51, 234, 0.3);
+  padding: 16px;
+  border-radius: 0;
+}
+
+.custom-segmented-control .segmented-control-item {
+  padding: 12px 16px !important;
+  font-size: 16px !important;
+  min-height: 48px !important;
+}
