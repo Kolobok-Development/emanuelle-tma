@@ -29,6 +29,12 @@ function RootInner({ children }: PropsWithChildren) {
     initDataUser && setLocale(initDataUser.language_code);
   }, [initDataUser]);
 
+
+  useEffect(() => {
+    console.log('initData')
+    console.log(initDataUser)
+  }, [initDataUser]);
+
   return (
     <TonConnectUIProvider manifestUrl="/tonconnect-manifest.json">
       <AppRoot

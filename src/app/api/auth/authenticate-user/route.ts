@@ -14,10 +14,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isAuthorized = isValid(
-      initData,
-      process.env.TELEGRAM_BOT_TOKEN || ""
-    );
+
+          console.log(initData)
+          console.log(process.env.TELEGRAM_BOT_KEY)
+
+          const isAuthorized = isValid(initData, '123')
 
     if (!isAuthorized) {
       return NextResponse.json(
