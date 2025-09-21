@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  directUrl    = env("DIRECT_URL")
+  relationMode = "prisma"
+}
+
+model Users {
+  id                    String                @id @default(uuid())
+  telegram_id           BigInt                @unique
+  username              String?
+  gender                String?
+  isTermsPolicyAccepted Boolean               @default(false)
+  subscription_tier     SubscriptionTier      @default(FREE)
+  subscription_expires  DateTime?
+  created_at            DateTime              @default(now())
+  updated_at            DateTime              @updatedAt
+  chats                 Chat[]
+  sessions              Session[]
+  subscription_history  SubscriptionHistory[]
+  settings              UserSettings?
+}
+
+model UserSettings {
+  id           String   @id @default(uuid())
+  user_id      String   @unique
+  tone         String?  @default("friendly")
+  nsfw_enabled Boolean  @default(false)
+  language     String   @default("en")
+  theme        String   @default("auto")
+  updated_at   DateTime @default(now()) @updatedAt
+  user         Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  user_id    String
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  user       Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Chat {
+  id           String    @id @default(uuid())
+  user_id      String
+  title        String?
+  is_active    Boolean   @default(true)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  companion_id String?
+  user         Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  messages     Message[]
+}
+
+model Message {
+  id          String   @id @default(uuid())
+  chat_id     String
+  role        ChatRole
+  content     String
+  tokens_used Int?
+  created_at  DateTime @default(now())
+  chat        Chat     @relation(fields: [chat_id], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionHistory {
+  id             String           @id @default(uuid())
+  user_id        String
+  tier           SubscriptionTier
+  amount         Decimal          @db.Decimal(10, 2)
+  currency       String           @default("USD")
+  payment_method String?
+  status         String           @default("completed")
+  expires_at     DateTime
+  created_at     DateTime         @default(now())
+  user           Users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model AICompanion {
+  id               String           @id
+  name             String           @unique
+  avatar           String
+  description      String
+  personality      String
+  energyCost       Int              @default(5)
+  isPremium        Boolean          @default(false)
+  subscriptionTier SubscriptionTier @default(FREE)
+  isActive         Boolean          @default(true)
+  created_at       DateTime         @default(now())
+  updated_at       DateTime
+}
+
+model CompanionSelection {
+  id               String   @id
+  telegram_user_id BigInt   @unique
+  companion_id     String
+  selected_at      DateTime @default(now())
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PREMIUM
+  ULTIMATE
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
