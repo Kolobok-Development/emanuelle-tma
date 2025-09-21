@@ -15,10 +15,8 @@ export async function POST(request: NextRequest) {
     }
 
 
-          console.log(initData)
-          console.log(process.env.TELEGRAM_BOT_KEY)
-
-          const isAuthorized = isValid(initData, '123')
+  
+    const isAuthorized = process.env.NODE_ENV === 'development' || isValid(initData, process.env.TELEGRAM_BOT_KEY as string);
 
     if (!isAuthorized) {
       return NextResponse.json(
