@@ -1,13 +1,48 @@
 'use client';
 
 import { Title, Text } from '@telegram-apps/telegram-ui';
+import { usePathname } from 'next/navigation';
 
 export const Header = () => {
+  const pathname = usePathname();
+
+  const getScreenInfo = () => {
+    switch (pathname) {
+      case '/':
+        return {
+          title: 'Привет Игрок',
+          subtitle: 'Я соскучилась по тебе!'
+        };
+      case '/shop':
+        return {
+          title: 'Магазин',
+          subtitle: 'Покупайте предметы для улучшения опыта'
+        };
+      case '/tasks':
+        return {
+          title: 'Задания',
+          subtitle: 'Выполняйте задания для получения наград'
+        };
+      case '/profile':
+        return {
+          title: 'Профиль',
+          subtitle: 'Управляйте своим профилем и настройками'
+        };
+      default:
+        return {
+          title: 'Привет Игрок',
+          subtitle: 'Я соскучилась по тебе!'
+        };
+    }
+  };
+
+  const { title, subtitle } = getScreenInfo();
+
   return (
     <div className="neon-grid-pattern fade-bottom-50">
       <div className="px-4 py-4">
-        <Title level="1" weight="2" className="mb-2 text-white">Привет Игрок</Title>
-        <Text className="opacity-75 text-white">Я соскучилась по тебе!</Text>
+        <Title level="1" weight="2" className="mb-2 text-white">{title}</Title>
+        <Text className="opacity-75 text-white">{subtitle}</Text>
         <div className="flex items-center gap-3 mb-6 mt-4">
           <div className="flex items-center bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-purple-500/30">
             <div className="flex items-center gap-2">

@@ -1,8 +1,8 @@
 'use client';
 
-import { Section, Cell, Image, List, Text, Title, Spinner, Subheadline, Button, Header, Badge, Card } from '@telegram-apps/telegram-ui';
+import { Section, Cell, Image, List, Text, Title, Spinner, Subheadline, Button, Header, Badge, Card, Skeleton } from '@telegram-apps/telegram-ui';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Link } from '@/components/Link/Link';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher/LocaleSwitcher';
@@ -13,56 +13,16 @@ import { useAppContext } from '@/context/AppContext';
 import React from 'react';
 import { CardChip } from '@telegram-apps/telegram-ui/dist/components/Blocks/Card/components/CardChip/CardChip';
 import { CardCell } from '@telegram-apps/telegram-ui/dist/components/Blocks/Card/components/CardCell/CardCell';
+import { fetcher } from '@/utils/fetcher';
+import useSWR from 'swr';
+import { AICompanion } from '@prisma/client';
 
 export default function Home() {
   const t = useTranslations('i18n');
   const { user, isAuthenticated } = useAppContext();
 
 
-
-  const [selectedCategory, setSelectedCategory] = useState<"girls" | "guys">("girls");
-
-  const aiFriends = [
-    {
-      id: "1",
-      name: "Анна",
-      personality: "Соблазнительная мачеха",
-      avatar: "https://storage.yandexcloud.net/pet-projects/openart-image_UwtF7xYJ_1754242349353_raw.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=YCAJE8gKjOxKaPpaO_RXn7kub%2F20250921%2Fru-central1%2Fs3%2Faws4_request&X-Amz-Date=20250921T161358Z&X-Amz-Expires=2592000&X-Amz-Signature=6b915a0f26ab49526da464bf8ba6ed2689e2453e147b8957aa60828a9a125cc7&X-Amz-SignedHeaders=host",
-      status: "online",
-      specialty: "Флирт и романтика",
-      mood: "Игривая 💋",
-      lastMessage: "Привет, красавчик...",
-      unreadCount: 3,
-      category: "girls",
-    },
-    {
-      id: "2",
-      name: "Майя",
-      personality: "Игривая сводная сестра",
-      avatar: "https://storage.yandexcloud.net/pet-projects/openart-make-her-wear-a-black-off-shoulder-cocktail-dress-leaning-on-a-velvet-bar-.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=YCAJE8gKjOxKaPpaO_RXn7kub%2F20250921%2Fru-central1%2Fs3%2Faws4_request&X-Amz-Date=20250921T161423Z&X-Amz-Expires=2592000&X-Amz-Signature=0141aef2061262fb0045e80f36d0c6d4fb5ac91f4fa1246c7dcdecabc154aadb&X-Amz-SignedHeaders=host",
-      status: "online",
-      specialty: "Дружба и поддержка",
-      mood: "Веселая 😊",
-      lastMessage: "Как дела, братик?",
-      unreadCount: 1,
-      category: "girls",
-    },
-    {
-      id: "3",
-      name: "Кристина",
-      personality: "Звезда K-pop",
-      avatar: "https://storage.yandexcloud.net/pet-projects/openart-make-her-wear-a-white-thong-bikini-standing-with-back-to-camera-looking-ov.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=YCAJE8gKjOxKaPpaO_RXn7kub%2F20250921%2Fru-central1%2Fs3%2Faws4_request&X-Amz-Date=20250921T161501Z&X-Amz-Expires=2592000&X-Amz-Signature=4ee09db8641ac65456a3dec4b80e455f22b0a974caffb7683b0c1170e0fc0f84&X-Amz-SignedHeaders=host",
-      status: "busy",
-      specialty: "Музыка и танцы",
-      mood: "Танцую 💃",
-      lastMessage: "Слушай мою новую песню!",
-      unreadCount: 0,
-      category: "girls",
-    },
-    
-  ];
-
-  const filteredFriends = aiFriends.filter((friend) => friend.category === selectedCategory);
+  const { data, isLoading, error } = useSWR<{ companions: AICompanion[] }>('/api/companion/get-all', fetcher);
 
   if (!isAuthenticated) {
     return (
@@ -82,34 +42,61 @@ export default function Home() {
     )
   }
 
+  // Skeleton component for loading state
+  const SkeletonCard = () => (
+    <Card type="ambient">
+      <Skeleton
+        visible
+        withoutAnimation={false}
+      >
+        <div
+          className='h-[308px] w-full rounded-t-lg'
+        />
+        <CardCell
+          readOnly
+          subtitle="Loading..."
+        >
+        </CardCell>
+      </Skeleton>
+    </Card>
+  );
+
   return (
     <Page back={false}> 
       <div className="min-h-screen cosmic-background">
         <div className="px-4 py-4">
           {/* Friends Grid */}
           <div className="grid grid-cols-2 gap-4 mb-10">
-            {filteredFriends.map((friend, index) => (
-                 <Card key={friend.id} type="ambient">
-                 <React.Fragment>
-                   <img
-                     alt="ai-companion"
-                     src={friend.avatar}
-                     style={{
-                       display: 'block',
-                       height: 308,
-                       objectFit: 'cover',
-                       width: 254
-                     }}
+            {isLoading ? (
+              // Show skeleton cards while loading
+              Array.from({ length: 5 }).map((_, index) => (
+                <SkeletonCard key={index} />
+              ))
+            ) : (
+              // Show actual data when loaded
+              data?.companions?.map((friend, index) => (
+                <Card key={friend.id} type="ambient">
+                  <React.Fragment>
+                    <img
+                      alt="ai-companion"
+                      src={friend.avatar}
+                      style={{
+                        display: 'block',
+                        height: 308,
+                        objectFit: 'cover',
+                        width: 254
+                      }}
                     />
                     <CardCell
-                     readOnly
-                     subtitle={friend.personality}
-                     >
-                       {friend.name}
-                     </CardCell>
-                 </React.Fragment>
-               </Card>  
-            ))}
+                      readOnly
+                      subtitle={friend.description}
+                    >
+                      {friend.name}
+                    </CardCell>
+                  </React.Fragment>
+                </Card>  
+              ))
+            )}
           </div>
         </div>
           
