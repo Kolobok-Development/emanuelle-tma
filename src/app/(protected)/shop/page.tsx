@@ -43,10 +43,8 @@ export default function Shop() {
   ];
 
   return (
-    <Page back={false}>
       <div className="min-h-screen cosmic-background">
       
       </div>
-    </Page>
   );
 }

@@ -7,21 +7,22 @@ export async function middleware(request: NextRequest) {
     console.log("Middleware---->");
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
+
     const { pathname } = request.nextUrl;
 
     const routeConfig: Record<string, "*" | true> = {
         
         //API Routes
-        "api/auth/authenticate-user": true, // Public - used for initial authentication
-        "api/auth/me": "*", // Protected - requires JWT to get user data
-        "api/companion/*": "*", // Protected - requires JWT to access companion data
+        "/api/auth/authenticate-user": true, // Public - used for initial authentication
+        "/api/auth/me": "*", // Protected - requires JWT to get user data
+        "/api/companion/*": "*", // Protected - requires JWT to access companion data
       
         // Page Routes - these require authentication
-        "/": "*",
-        "dashboard": "*",
-        "shop": "*",
-        "tasks": "*",
-        "profile": "*",
+        "/": true,
+        "/dashboard": "*",
+        "/shop": "*",
+        "/tasks": "*",
+        "/profile": "*",
         
 
     }
@@ -53,8 +54,7 @@ export async function middleware(request: NextRequest) {
 
     // For routes that require authentication (matchedConfig === "*")
     console.log("Cookie Store---->");
-    const cookieStore = await cookies();
-    const cookie = cookieStore.get(COOKIE_NAME);
+    const cookie = request.cookies.get(COOKIE_NAME);;
 
     if (!cookie) {
         // Check if this is an API route
@@ -65,9 +65,7 @@ export async function middleware(request: NextRequest) {
             );
         }
         // For page routes, redirect to error page
-        const url = request.nextUrl.clone();
-        url.pathname = "/error";
-        return NextResponse.redirect(url);
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 
     const jwt = cookie.value;
@@ -87,9 +85,7 @@ export async function middleware(request: NextRequest) {
                 );
             }
             // For page routes, redirect to error page
-            const url = request.nextUrl.clone();
-            url.pathname = "/error";
-            return NextResponse.redirect(url);
+            return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
         console.log("JWT verified---->");
@@ -104,7 +100,7 @@ export async function middleware(request: NextRequest) {
             );
         }
         // For page routes, redirect to error page
-        return NextResponse.redirect(new URL("/error", request.url));
+        return NextResponse.redirect(new URL("/unauthorized", request.url));
     }
 }
 
@@ -112,7 +108,5 @@ export const config = {
     matcher: [
       // Skip static files, Next.js internals, and auth API routes
       "/((?!_next/static|_next/image|favicon.ico).*)",
-      // Include all API routes except auth
-      "/api/((?!auth).*)",
     ],
   };
