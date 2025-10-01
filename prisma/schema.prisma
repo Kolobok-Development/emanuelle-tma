@@ -92,13 +92,15 @@ model AICompanion {
   isActive         Boolean          @default(true)
   created_at       DateTime         @default(now())
   updated_at       DateTime
+  selections       CompanionSelection[]
 }
 
 model CompanionSelection {
-  id               String   @id
-  telegram_user_id BigInt   @unique
+  id               String      @id
+  telegram_user_id BigInt      @unique
   companion_id     String
-  selected_at      DateTime @default(now())
+  selected_at      DateTime    @default(now())
+  companion        AICompanion @relation(fields: [companion_id], references: [id], onDelete: Cascade)
 }
 
 enum SubscriptionTier {

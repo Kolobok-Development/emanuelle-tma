@@ -4,23 +4,26 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['error'],
-  errorFormat: 'pretty',
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL,
+const createPrismaClient = () => {
+  return new PrismaClient({
+    log: ['error'],
+    errorFormat: 'pretty',
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
     },
-  },
-  __internal: {
-    engine: {
-      connectTimeout: 60000,
-      queryTimeout: 60000,
-    },
-  },
-})
+  })
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export const prisma = process.env.NODE_ENV === 'development' 
+  ? (globalForPrisma.prisma ?? createPrismaClient())
+  : createPrismaClient()
+
+if (process.env.NODE_ENV === 'development') {
+  globalForPrisma.prisma = prisma
+}
+
 
 // Graceful shutdown for Prisma client
 const gracefulShutdown = async () => {
