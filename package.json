@@ -10,6 +10,7 @@
     "lint": "next lint",
     "queue:worker": "tsx src/lib/queues/processor.ts",
     "queue:test": "tsx src/scripts/test-queue-separation.ts",
+    "cache:test": "tsx src/scripts/test-cache.ts",
     "seed:companions": "tsx src/scripts/seed-companions.ts",
     "setup:env": "tsx src/scripts/setup-env.ts",
     "webhook:setup": "tsx src/scripts/setup-webhook.ts"

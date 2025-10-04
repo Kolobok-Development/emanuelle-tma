@@ -1,4 +1,5 @@
 import { prisma } from '@/core/db/prisma';
+import { CacheService } from './cache';
 
 export interface AICompanion {
   id: string;
@@ -16,34 +17,49 @@ export interface AICompanion {
 
 export class CompanionService {
   static async getCompanionById(id: string): Promise<AICompanion | null> {
-    try {
-      const companion = await prisma.aICompanion.findUnique({
-        where: { id },
-      });
-
-      return companion;
-    } catch (error) {
-      console.error('Error fetching companion by ID:', error);
-      return null;
-    }
+    const cacheKey = CacheService.keys.companion(id);
+    
+    return await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const companion = await prisma.aICompanion.findUnique({
+            where: { id },
+          });
+          return companion;
+        } catch (error) {
+          console.error('Error fetching companion by ID:', error);
+          return null;
+        }
+      },
+      CacheService.ttl.companion
+    );
   }
 
   static async getUserSelectedCompanion(telegramUserId: bigint): Promise<AICompanion | null> {
-    try {
-      const selection = await prisma.companionSelection.findUnique({
-        where: { telegram_user_id: telegramUserId },
-      });
+    const cacheKey = CacheService.keys.companionByTelegramId(telegramUserId.toString());
+    
+    return await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const selection = await prisma.companionSelection.findUnique({
+            where: { telegram_user_id: telegramUserId },
+          });
 
-      if (!selection) {
-        return null;
-      }
+          if (!selection) {
+            return null;
+          }
 
-      const companion = await this.getCompanionById(selection.companion_id);
-      return companion;
-    } catch (error) {
-      console.error('Error fetching user selected companion:', error);
-      return null;
-    }
+          const companion = await this.getCompanionById(selection.companion_id);
+          return companion;
+        } catch (error) {
+          console.error('Error fetching user selected companion:', error);
+          return null;
+        }
+      },
+      CacheService.ttl.companion
+    );
   }
 
   static async selectCompanion(telegramUserId: bigint, companionId: string): Promise<void> {
@@ -60,6 +76,9 @@ export class CompanionService {
           companion_id: companionId,
         },
       });
+
+      await CacheService.invalidateCompanion();
+      await CacheService.delete(CacheService.keys.companionByTelegramId(telegramUserId.toString()));
     } catch (error) {
       console.error('Error selecting companion:', error);
       throw error;
@@ -67,17 +86,26 @@ export class CompanionService {
   }
 
   static async getAllCompanions(): Promise<AICompanion[]> {
-    try {
-      const companions = await prisma.aICompanion.findMany({
-        where: { isActive: true },
-        orderBy: { name: 'asc' },
-      });
-
-      return companions;
-    } catch (error) {
-      console.error('Error fetching all companions:', error);
-      return [];
-    }
+    const cacheKey = CacheService.keys.allCompanions();
+    
+    const result = await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const companions = await prisma.aICompanion.findMany({
+            where: { isActive: true },
+            orderBy: { name: 'asc' },
+          });
+          return companions;
+        } catch (error) {
+          console.error('Error fetching all companions:', error);
+          return [];
+        }
+      },
+      CacheService.ttl.companion
+    );
+    
+    return result || [];
   }
 
   static async seedDefaultCompanions(): Promise<void> {
