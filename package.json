@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "queue:worker": "tsx src/lib/queues/processor.ts",
+    "queue:test": "tsx src/scripts/test-queue-separation.ts",
     "seed:companions": "tsx src/scripts/seed-companions.ts",
+    "setup:env": "tsx src/scripts/setup-env.ts",
     "webhook:setup": "tsx src/scripts/setup-webhook.ts"
   },
   "dependencies": {
@@ -21,6 +23,7 @@
     "@tonconnect/ui-react": "^2.1.0",
     "axios": "^1.12.2",
     "bullmq": "^5.58.7",
+    "dotenv": "^17.2.3",
     "eruda": "^3.0.1",
     "ioredis": "^5.7.0",
     "jose": "^6.1.0",

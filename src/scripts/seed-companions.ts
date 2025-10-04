@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { CompanionService } from '@/lib/companions';
 
 async function seedCompanions() {
