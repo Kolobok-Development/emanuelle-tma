@@ -1,19 +1,6 @@
 import { prisma } from '@/core/db/prisma';
 import { CacheService } from './cache';
-
-export interface AICompanion {
-  id: string;
-  name: string;
-  avatar: string;
-  description: string;
-  personality: string;
-  energyCost: number;
-  isPremium: boolean;
-  subscriptionTier: 'FREE' | 'BASIC' | 'PREMIUM' | 'ULTIMATE';
-  isActive: boolean;
-  created_at: Date;
-  updated_at: Date;
-}
+import { AICompanion } from '@prisma/client';
 
 export class CompanionService {
   static async getCompanionById(id: string): Promise<AICompanion | null> {
@@ -119,6 +106,8 @@ export class CompanionService {
           avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
           description: 'A sophisticated and intellectual companion who loves deep conversations about art, philosophy, and culture. She\'s well-read, thoughtful, and enjoys exploring complex ideas with you.',
           personality: 'Intellectual, sophisticated, thoughtful, cultured, philosophical, well-read, engaging in deep conversations',
+          visualAppearance: 'A sophisticated woman with long, flowing auburn hair, piercing green eyes, and an elegant bone structure. She has a refined, intellectual beauty with subtle freckles across her nose. Her style is classic and timeless - often wearing tailored blouses, vintage jewelry, and reading glasses perched on her nose. She has a warm, inviting smile that conveys both intelligence and approachability.',
+          imageSeed: 'emanuelle_consistent_12345',
           energyCost: 5,
           isPremium: false,
           subscriptionTier: 'FREE' as const,
@@ -130,6 +119,8 @@ export class CompanionService {
           avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face',
           description: 'A warm and empathetic companion who\'s always there to listen and support you. She\'s great at emotional conversations and helping you work through your feelings.',
           personality: 'Warm, empathetic, supportive, caring, good listener, emotionally intelligent, nurturing',
+          visualAppearance: 'A gentle woman with soft brown eyes and shoulder-length chestnut hair that falls in natural waves. She has a kind, nurturing face with a gentle smile and dimples when she laughs. Her skin has a warm, golden undertone and she often wears cozy, comfortable clothing in earth tones. She has an approachable, motherly presence that makes you feel instantly comfortable.',
+          imageSeed: 'sophia_consistent_67890',
           energyCost: 5,
           isPremium: false,
           subscriptionTier: 'FREE' as const,
@@ -141,6 +132,8 @@ export class CompanionService {
           avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=face',
           description: 'A creative and imaginative companion who loves storytelling, art, and exploring fantastical ideas. She\'s playful, artistic, and always ready for an adventure.',
           personality: 'Creative, imaginative, artistic, playful, adventurous, storytelling, whimsical, inspiring',
+          visualAppearance: 'A vibrant young woman with striking violet-blue eyes and long, wavy silver-blonde hair that catches the light. She has an ethereal, artistic beauty with delicate features and expressive hands that move gracefully when she talks. Her style is bohemian and eclectic - flowing fabrics, colorful accessories, and often paint-stained fingers. She has an infectious, mischievous smile and sparkling eyes full of wonder.',
+          imageSeed: 'luna_consistent_11111',
           energyCost: 5,
           isPremium: false,
           subscriptionTier: 'FREE' as const,
@@ -156,6 +149,8 @@ export class CompanionService {
             avatar: companionData.avatar,
             description: companionData.description,
             personality: companionData.personality,
+            ...(companionData as any).visualAppearance && { visualAppearance: (companionData as any).visualAppearance },
+            ...(companionData as any).imageSeed && { imageSeed: (companionData as any).imageSeed },
             energyCost: companionData.energyCost,
             isPremium: companionData.isPremium,
             subscriptionTier: companionData.subscriptionTier,

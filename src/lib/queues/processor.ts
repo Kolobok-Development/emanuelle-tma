@@ -133,6 +133,8 @@ const imageGenerationWorker = new Worker(
       const imageResponse = await ImageGenerationService.generateCompanionImage(
         companion.name,
         companion.description,
+        (companion as any).visualAppearance,
+        (companion as any).imageSeed,
         userPrompt
       );
 

@@ -86,6 +86,8 @@ model AICompanion {
   avatar           String
   description      String
   personality      String
+  visualAppearance String?         
+  imageSeed        String?         
   energyCost       Int              @default(5)
   isPremium        Boolean          @default(false)
   subscriptionTier SubscriptionTier @default(FREE)

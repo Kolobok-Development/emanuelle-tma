@@ -11,6 +11,7 @@ export interface ImageGenerationRequest {
   scheduler?: string;
   guidance_scale?: string;
   enhance_prompt?: boolean;
+  seed?: string;
 }
 
 export interface ImageGenerationResponse {
@@ -46,6 +47,7 @@ export class ImageGenerationService {
         scheduler: request.scheduler || "DPMSolverMultistepScheduler",
         guidance_scale: request.guidance_scale || "7.5",
         enhance_prompt: request.enhance_prompt || false,
+        seed: request.seed,
         key: apiKey
       };
 
@@ -102,9 +104,13 @@ export class ImageGenerationService {
   static async generateCompanionImage(
     companionName: string,
     companionDescription: string,
+    visualAppearance?: string,
+    imageSeed?: string,
     userPrompt?: string
   ): Promise<ImageGenerationResponse> {
-    const basePrompt = `R3alisticF, ${companionDescription}, ${companionName}, beautiful, detailed, high quality, professional photography`;
+    const visualPrompt = visualAppearance || companionDescription;
+    
+    const basePrompt = `R3alisticF, ${visualPrompt}, ${companionName}, beautiful, detailed, high quality, professional photography, consistent character, same person`;
     const fullPrompt = userPrompt ? `${basePrompt}, ${userPrompt}` : basePrompt;
 
     return this.generateImage({
@@ -117,7 +123,8 @@ export class ImageGenerationService {
       num_inference_steps: "31",
       scheduler: "DPMSolverMultistepScheduler",
       guidance_scale: "7.5",
-      enhance_prompt: false
+      enhance_prompt: false,
+      seed: imageSeed
     });
   }
 
