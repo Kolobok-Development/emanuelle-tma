@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { Worker, Job } from 'bullmq';
 import { createRedisConnection } from '../redis';
 import { AIService, AIMessage } from '../ai';
-import { TelegramService } from '../telegram';
+import { TelegramService, InlineKeyboardMarkup } from '../telegram';
 import { ConversationService } from '../conversation';
 import { AIResponseJobData } from './ai-response-queue';
 
@@ -44,6 +44,8 @@ const aiResponseWorker = new Worker(
 
       console.log('Generating AI response for:', companion.name, 'with context length:', conversationHistory.length);
       
+      await TelegramService.sendChatAction(chatId, 'typing');
+      
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
         companion.name,
@@ -64,7 +66,16 @@ const aiResponseWorker = new Worker(
         }
       }
 
-      await TelegramService.sendMessage(chatId, aiResponse.message || "");
+      const actionButton: InlineKeyboardMarkup = {
+        inline_keyboard: [[
+          {
+            text: "📸 пришли фотографию",
+            callback_data: "request_photo"
+          }
+        ]]
+      };
+
+      await TelegramService.sendMessage(chatId, aiResponse.message || "", 'HTML', actionButton);
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       

@@ -55,6 +55,27 @@ export async function POST(request: NextRequest) {
       console.log(`Queued message from ${from.username || from.first_name} to ${selectedCompanion.name}: ${text}`);
     }
 
+    if (body.callback_query) {
+      const { callback_query } = body;
+      const { data, message, from: callbackFrom } = callback_query;
+
+      console.log(`Received callback query: ${data} from user ${callbackFrom.id}`);
+
+      if (data === 'request_photo') {
+        const selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(callbackFrom.id));
+        
+        if (selectedCompanion) {
+          const photoRequestMessage = `${selectedCompanion.avatar} <b>${selectedCompanion.name}</b>\n\n📸 Да, конечно! Пришли мне свою фотографию, и я с удовольствием на неё посмотрю! 😊`;
+          
+          await TelegramService.sendMessage(message.chat.id, photoRequestMessage);
+        } else {
+          await TelegramService.sendMessage(message.chat.id, "👋 Пожалуйста, сначала выберите спутника!");
+        }
+
+        await TelegramService.answerCallbackQuery(callback_query.id);
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Webhook error:', error);
