@@ -139,5 +139,84 @@ export class TelegramService {
       return null;
     }
   }
+
+  static async sendPhoto(
+    chatId: number, 
+    photo: Buffer, 
+    caption?: string,
+    parseMode: 'HTML' | 'Markdown' = 'HTML'
+  ): Promise<TelegramResponse | null> {
+    if (!this.botToken) {
+      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+      return null;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('chat_id', chatId.toString());
+      formData.append('photo', new Blob([new Uint8Array(photo)], { type: 'image/jpeg' }), 'image.jpg');
+
+      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Failed to send photo:', data);
+        return { ok: false, error_code: data.error_code, description: data.description };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error sending photo:', error);
+      return null;
+    }
+  }
+
+  static async sendPhotoFromUrl(
+    chatId: number, 
+    photoUrl: string, 
+    caption?: string,
+    parseMode: 'HTML' | 'Markdown' = 'HTML'
+  ): Promise<TelegramResponse | null> {
+    if (!this.botToken) {
+      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+      return null;
+    }
+
+    try {
+      const payload: any = {
+        chat_id: chatId,
+        photo: photoUrl
+      };
+
+      if (caption) {
+        payload.caption = caption;
+        payload.parse_mode = parseMode;
+      }
+
+      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Failed to send photo from URL:', data);
+        return { ok: false, error_code: data.error_code, description: data.description };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error sending photo from URL:', error);
+      return null;
+    }
+  }
 }
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queueAIResponse } from '@/lib/queues/ai-response-queue';
+import { queueImageGeneration } from '@/lib/queues/image-generation-queue';
 import { CompanionService } from '@/lib/companions';
 import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
@@ -65,7 +66,15 @@ export async function POST(request: NextRequest) {
         const selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(callbackFrom.id));
         
         if (selectedCompanion) {
-          const photoRequestMessage = `${selectedCompanion.avatar} <b>${selectedCompanion.name}</b>\n\n📸 Да, конечно! Пришли мне свою фотографию, и я с удовольствием на неё посмотрю! 😊`;
+          await queueImageGeneration(
+            message.chat.id,
+            selectedCompanion,
+            callbackFrom.username || callbackFrom.first_name || 'User',
+            undefined, 
+            message.message_id
+          );
+          
+          const photoRequestMessage = `${selectedCompanion.name}</b>\n\n📸 Создаю для тебя особенное изображение... Это займёт немного времени! 😊`;
           
           await TelegramService.sendMessage(message.chat.id, photoRequestMessage);
         } else {

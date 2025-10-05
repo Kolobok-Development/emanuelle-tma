@@ -32,14 +32,32 @@ This project contains the following scripts:
 - `build`. Builds the application for production.
 - `start`. Starts the Next.js server in production mode.
 - `lint`. Runs [eslint](https://eslint.org/) to ensure the code quality meets
-  the required
-  standards.
+  the required standards.
+- `queue:worker`. Starts the combined queue worker (handles both AI responses and image generation).
 
 To run a script, use the `pnpm run` command:
 
 ```Bash
 pnpm run {script}
 # Example: pnpm run build
+```
+
+## Environment Configuration
+
+Before running the application, you need to set up the following environment variables:
+
+1. **TELEGRAM_BOT_KEY**: Your Telegram bot token from [@BotFather](https://t.me/botfather)
+2. **MODELSLAB_KEY**: Your ModelsLab API key for AI chat and image generation
+3. **DATABASE_URL**: PostgreSQL connection string for the database
+4. **REDIS_URL**: Redis connection string (optional, defaults to local Redis)
+
+Create a `.env.local` file in the project root with these variables:
+
+```bash
+TELEGRAM_BOT_KEY=your_telegram_bot_token_here
+MODELSLAB_KEY=your_modelslab_api_key_here
+DATABASE_URL=your_postgresql_connection_string_here
+REDIS_URL=your_redis_connection_string_here
 ```
 
 ## Create Bot and Mini App
@@ -60,6 +78,20 @@ To run the application in the development mode, use the `dev` script:
 ```bash
 pnpm run dev
 ```
+
+### Running Queue Worker
+
+For full functionality, you need to run the combined queue worker:
+
+```bash
+pnpm run queue:worker
+```
+
+This single worker handles both:
+- **AI Response Processing** (text responses)
+- **Image Generation** (image creation requests)
+
+The worker needs to be running for the bot to function properly.
 
 After this, you will see a similar message in your terminal:
 
