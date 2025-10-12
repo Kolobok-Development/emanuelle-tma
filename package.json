@@ -28,6 +28,7 @@
     "eruda": "^3.0.1",
     "ioredis": "^5.7.0",
     "jose": "^6.1.0",
+    "modelslab": "^1.0.3",
     "next": "15.3.1",
     "next-intl": "^4.1.0",
     "normalize.css": "^8.0.1",

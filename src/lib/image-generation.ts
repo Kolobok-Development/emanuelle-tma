@@ -1,4 +1,6 @@
 import axios from 'axios';
+// @ts-ignore
+import { Client, Community } from 'modelslab';
 
 export interface ImageGenerationRequest {
   prompt: string;
@@ -23,71 +25,72 @@ export interface ImageGenerationResponse {
 }
 
 export class ImageGenerationService {
-  private static readonly API_URL = 'https://modelslab.com/api/v6/images/text2img';
   private static readonly DEFAULT_MODEL_ID = 'fluxdev';
   private static readonly DEFAULT_LORA_MODEL = 'nobody5femaleuncensoredflux1d-v10';
   private static readonly DEFAULT_NEGATIVE_PROMPT = '(worst quality:2), (low quality:2), (normal quality:2), (jpeg artifacts), (blurry), (duplicate), (morbid), (mutilated), (out of frame), (extra limbs), (bad anatomy), (disfigured), (deformed), (cross-eye), (glitch), (oversaturated), (overexposed), (underexposed), (bad proportions), (bad hands), (bad feet), (cloned face), (long neck), (missing arms), (missing legs), (extra fingers), (fused fingers), (poorly drawn hands), (poorly drawn face), (mutation), (deformed eyes), watermark, text, logo, signature, grainy, tiling, censored, nsfw, ugly, blurry eyes, noisy image, bad lighting, unnatural skin, asymmetry';
 
-  static async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
+  private static getClient(): Client {
     const apiKey = process.env.MODELSLAB_KEY;
-    
     if (!apiKey) {
-      return { status: 'error', error: 'Image generation service not configured' };
+      throw new Error('MODELSLAB_KEY environment variable is not set');
     }
+    return new Client(apiKey);
+  }
 
+  private static getCommunity(): Community {
+    const apiKey = process.env.MODELSLAB_KEY;
+    if (!apiKey) {
+      throw new Error('MODELSLAB_KEY environment variable is not set');
+    }
+    return new Community(apiKey);
+  }
+
+  static async generateImage(request: ImageGenerationRequest): Promise<ImageGenerationResponse> {
     try {
-      const requestBody = {
+      const community = this.getCommunity();
+      const client = this.getClient();
+      
+      console.log('Sending image generation request to ModelsLab API');
+      
+      const response = await community.textToImage({
+        key: client.key,
         prompt: request.prompt,
         model_id: request.model_id || this.DEFAULT_MODEL_ID,
         lora_model: request.lora_model || this.DEFAULT_LORA_MODEL,
-        width: request.width || "1024",
-        height: request.height || "1024",
+        width: parseInt(request.width || "1024"),
+        height: parseInt(request.height || "1024"),
         negative_prompt: request.negative_prompt || this.DEFAULT_NEGATIVE_PROMPT,
-        num_inference_steps: request.num_inference_steps || "31",
+        num_inference_steps: parseInt(request.num_inference_steps || "28"),
         scheduler: request.scheduler || "DPMSolverMultistepScheduler",
-        guidance_scale: request.guidance_scale || "7.5",
+        guidance_scale: parseFloat(request.guidance_scale || "5"),
         enhance_prompt: request.enhance_prompt || false,
-        seed: request.seed,
-        key: apiKey
-      };
+        seed: request.seed ? parseInt(request.seed) : undefined
+      });
 
-      console.log('Sending image generation request to ModelsLab API');
-      
-      const response = await axios.post(
-        this.API_URL,
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 60000,
-        }
-      );
+      console.log('Image generation response received:', response);
 
-      console.log('Image generation response received:', response.data);
-
-      if (response.data.status === 'success' && response.data.output) {
+      if (response.status === 'success' && response.output) {
         return {
           status: 'success',
-          output: response.data.output
+          output: response.output
         };
-      } else if (response.data.status === 'processing') {
+      } else if (response.status === 'processing') {
         return {
           status: 'processing',
-          eta: response.data.eta,
-          fetch_result: response.data.fetch_result
+          eta: response.eta,
+          fetch_result: response.fetch_result
         };
       } else {
         return {
           status: 'error',
-          error: response.data.message || 'Unknown error occurred'
+          error: response.message || 'Unknown error occurred'
         };
       }
 
     } catch (error: any) {
-      console.error('Image generation service error:', error.response?.data || error.message);
+      console.error('Image generation service error:', error.message);
       
-      if (error.response?.status === 429) {
+      if (error.message?.includes('rate limit')) {
         return {
           status: 'error',
           error: 'API rate limit exceeded. Please try again later.'
@@ -96,7 +99,7 @@ export class ImageGenerationService {
       
       return {
         status: 'error',
-        error: error.response?.data?.error || error.message || 'Image generation service unavailable'
+        error: error.message || 'Image generation service unavailable'
       };
     }
   }
@@ -120,9 +123,9 @@ export class ImageGenerationService {
       width: "1024",
       height: "1024",
       negative_prompt: this.DEFAULT_NEGATIVE_PROMPT,
-      num_inference_steps: "31",
+      num_inference_steps: "28",
       scheduler: "DPMSolverMultistepScheduler",
-      guidance_scale: "7.5",
+      guidance_scale: "5",
       enhance_prompt: false,
       seed: imageSeed
     });
@@ -139,6 +142,47 @@ export class ImageGenerationService {
     } catch (error) {
       console.error('Error fetching image from URL:', error);
       return null;
+    }
+  }
+
+  static async pollForImageCompletion(fetchUrl: string): Promise<ImageGenerationResponse> {
+    console.log(`Starting to poll for image completion: ${fetchUrl}`);
+    
+    try {
+      const community = this.getCommunity();
+      
+      const urlParts = fetchUrl.split('/');
+      const requestId = urlParts[urlParts.length - 1];
+      
+      console.log(`Using SDK built-in fetch method for request ID: ${requestId}`);
+      
+      const response = await community.fetch(requestId);
+
+      console.log('SDK fetch response:', response);
+
+      if (response.status === 'success' && response.output && response.output.length > 0) {
+        console.log('Image generation completed successfully using SDK fetch!');
+        return {
+          status: 'success',
+          output: response.output
+        };
+      } else if (response.status === 'error') {
+        return {
+          status: 'error',
+          error: response.message || 'Image generation failed'
+        };
+      } else {
+        return {
+          status: 'error',
+          error: 'Unexpected response status from SDK fetch'
+        };
+      }
+    } catch (error: any) {
+      console.error('Error using SDK fetch method:', error.message);
+      return {
+        status: 'error',
+        error: `Failed to fetch image completion: ${error.message}`
+      };
     }
   }
 }

@@ -148,7 +148,32 @@ const imageGenerationWorker = new Worker(
         const processingMessage = `<b>${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
         await TelegramService.sendMessage(chatId, processingMessage);
         
-        throw new Error('Image generation is still processing, will retry');
+        if (imageResponse.fetch_result) {
+          console.log('Polling for image completion using fetch URL:', imageResponse.fetch_result);
+          
+          const polledResponse = await ImageGenerationService.pollForImageCompletion(
+            imageResponse.fetch_result
+          );
+          
+          if (polledResponse.status === 'success' && polledResponse.output && polledResponse.output.length > 0) {
+            const imageUrl = polledResponse.output[0];
+            
+            const caption = `<b>${companion.name}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
+            
+            const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
+            
+            if (result && result.ok) {
+              console.log(`Image sent successfully for chat ${chatId} after polling`);
+              return { success: true, imageUrl };
+            } else {
+              throw new Error('Failed to send image to Telegram after polling');
+            }
+          } else {
+            throw new Error(`Image generation failed after polling: ${polledResponse.error || 'Unknown error'}`);
+          }
+        } else {
+          throw new Error('No fetch URL provided for polling');
+        }
       }
 
       if (imageResponse.status === 'success' && imageResponse.output && imageResponse.output.length > 0) {

@@ -73,12 +73,6 @@ export async function POST(request: NextRequest) {
             undefined, 
             message.message_id
           );
-          
-          const photoRequestMessage = `${selectedCompanion.name}</b>\n\n📸 Создаю для тебя особенное изображение... Это займёт немного времени! 😊`;
-          
-          await TelegramService.sendMessage(message.chat.id, photoRequestMessage);
-        } else {
-          await TelegramService.sendMessage(message.chat.id, "👋 Пожалуйста, сначала выберите спутника!");
         }
 
         await TelegramService.answerCallbackQuery(callback_query.id);
