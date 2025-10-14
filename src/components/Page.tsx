@@ -30,7 +30,7 @@ export function Page({ children, back = true }: PropsWithChildren<{
   }, [router]);
 
   return (
-    <div className="cosmic-background">
+    <div className="above-mask">
       <Header />
       {children}
       <BottomNavigation />

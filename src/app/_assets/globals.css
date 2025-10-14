@@ -1,84 +1,244 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  background: var(--tg-theme-secondary-bg-color, white);
-  padding: 0;
-  margin: 0;
+/* --- TOKENS (dark-only) --- */
+:root {
+  --radius: 0.75rem;
+  --background: oklch(0.22 0.02 310);
+  --foreground: oklch(0.96 0.02 310);
+
+  --card: oklch(0.28 0.025 305);
+  --card-foreground: oklch(0.96 0.02 310);
+  --popover: oklch(0.28 0.025 305);
+  --popover-foreground: oklch(0.96 0.02 310);
+
+  --primary: oklch(0.73 0.27 345);
+  --primary-foreground: oklch(0.22 0.02 310);
+
+  --secondary: oklch(0.62 0.26 300);
+  --secondary-foreground: oklch(0.96 0.02 310);
+
+  --muted: oklch(0.37 0.03 310);
+  --muted-foreground: oklch(0.82 0.11 305);
+
+  --accent: oklch(0.62 0.26 300);
+  --accent-foreground: oklch(0.96 0.02 310);
+
+  --destructive: oklch(0.65 0.23 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.42 0.03 305);
+  --input:  oklch(0.42 0.03 305);
+  --ring:   oklch(0.62 0.26 300);
+
+  /* charts */
+  --chart-1: oklch(0.62 0.26 300);
+  --chart-2: oklch(0.73 0.27 345);
+  --chart-3: oklch(0.85 0.12 340);
+  --chart-4: oklch(0.82 0.11 305);
+  --chart-5: oklch(0.52 0.29 290);
+
+  /* sidebar */
+  --sidebar: oklch(0.28 0.025 305);
+  --sidebar-foreground: oklch(0.96 0.02 310);
+  --sidebar-primary: oklch(0.73 0.27 345);
+  --sidebar-primary-foreground: oklch(0.22 0.02 310);
+  --sidebar-accent: oklch(0.37 0.03 310);
+  --sidebar-accent-foreground: oklch(0.82 0.11 305);
+  --sidebar-border: oklch(0.42 0.03 305);
+  --sidebar-ring: oklch(0.62 0.26 300);
 }
 
-.cosmic-background {
-  background: radial-gradient(circle at 20% 80%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 100, 0, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(0, 255, 200, 0.2) 0%, transparent 50%),
-    linear-gradient(135deg, #1a0033 0%, #0d001a 50%, #001a0d 100%);
-}
+/* --- BASE: apply tokens --- */
+:root { color-scheme: dark; }
 
-.neon-grid-pattern {
-  background-image: linear-gradient(rgba(120, 0, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 0, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(rgba(0, 255, 200, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 200, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
-  animation: grid-drift 30s linear infinite;
-}
+@layer base {
+  html, body { height: 100%; }
 
-@keyframes grid-drift {
-  0% {
-    background-position: 0 0, 0 0, 0 0, 0 0;
+  body {
+    margin: 0;
+    padding: 0;
+    /* Using Tailwind's arbitrary value helper keeps JIT happy */
+    @apply bg-[color:var(--background)] text-[color:var(--foreground)];
+    font-family: var(--font-space-mono, 'Space Mono', monospace);
+    line-height: 1.6;
+    letter-spacing: 0.025em;
+    position: relative;
   }
-  100% {
-    background-position: 50px 50px, 50px 50px, 10px 10px, 10px 10px;
+
+  /* Global mask background - always present */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    pointer-events: none;
+    -webkit-mask: url('/bg/mask@2x.png') no-repeat center / cover;
+            mask: url('/bg/mask@2x.png') no-repeat center / cover;
+    background: linear-gradient(
+      90deg,
+      oklch(0.73 0.27 345) 0%,
+      oklch(0.66 0.25 320) 50%,
+      oklch(0.62 0.26 300) 100%
+    );
+    opacity: 0.9;
+  }
+
+  /* Retina support for global mask */
+  @media (min-resolution: 2dppx) {
+    body::before {
+      -webkit-mask-image: url('/bg/mask@2x.png');
+              mask-image: url('/bg/mask@2x.png');
+    }
+  }
+
+  /* WebP support for global mask */
+  @supports (-webkit-mask-image: -webkit-image-set(url('/bg/mask@1x.webp') 1x)) {
+    body::before {
+      -webkit-mask-image: -webkit-image-set(
+        url('/bg/mask@1x.webp') 1x,
+        url('/bg/mask@2x.webp') 2x
+      );
+              mask-image: image-set(
+        url('/bg/mask@1x.webp') 1x type('image/webp'),
+        url('/bg/mask@2x.webp') 2x type('image/webp')
+      );
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--foreground);
+    font-family: var(--font-space-mono, 'Space Mono', monospace);
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  p {
+    color: var(--foreground);
+    font-size: 1rem;
+  }
+
+  small {
+    color: var(--muted-foreground);
+  }
+
+  a {
+    color: var(--primary);
+    transition: color 0.2s ease;
+  }
+
+  a:hover {
+    color: color-mix(in oklch, var(--primary) 80%, white);
+  }
+
+  /* All borders use your token by default */
+  *, ::before, ::after {
+    border-color: var(--border);
+  }
+
+  /* Accessiblity ring that respects your --ring token */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 30%, transparent);
+    color: var(--primary-foreground);
   }
 }
 
-.fade-bottom {
-  mask: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
-  -webkit-mask: linear-gradient(to bottom, black 0%, black 50%, transparent 100%);
+/* --- Nice gradients from your palette --- */
+.bg-gradient-pink-purple {
+  background: linear-gradient(
+    90deg,
+    oklch(0.73 0.27 345) 0%,
+    oklch(0.66 0.25 320) 50%,
+    oklch(0.62 0.26 300) 100%
+  );
 }
 
-.fade-bottom-50 {
-  mask: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
-  -webkit-mask: linear-gradient(to bottom, black 0%, black 70%, transparent 100%);
+.bg-radial-purple {
+  background: radial-gradient(
+    circle at 30% 30%,
+    oklch(0.62 0.26 300) 0%,
+    oklch(0.45 0.10 300) 60%,
+    transparent 100%
+  );
 }
 
-
-.cosmic-button {
-  background: linear-gradient(135deg, #7800ff 0%, #ff6400 50%, #00ffc8 100%);
-  background-size: 300% 300%;
-  animation: cosmic-gradient-shift 6s ease infinite;
-  position: relative;
-  overflow: hidden;
+.bg-radial-pink {
+  background: radial-gradient(
+    circle at 50% 50%,
+    oklch(0.73 0.27 345) 0%,
+    oklch(0.52 0.18 345) 40%,
+    transparent 100%
+  );
 }
 
-@keyframes cosmic-gradient-shift {
-  0% {
-    background-position: 0% 50%;
+/* --- Mask utility: WebP with PNG fallback (ALPHA mask version) --- */
+/* Ensure your files live at <root>/public/bg/... */
+@layer utilities {
+  /* PNG fallback (works everywhere) */
+  .app-mask {
+    -webkit-mask: url('/bg/mask@2x.png') no-repeat center / cover;
+            mask: url('/bg/mask@2x.png') no-repeat center / cover;
   }
-  50% {
-    background-position: 100% 50%;
+  @media (max-resolution: 1.99dppx) {
+    .app-mask {
+      -webkit-mask-image: url('/bg/mask@1x.png');
+              mask-image: url('/bg/mask@1x.png');
+    }
   }
-  100% {
-    background-position: 0% 50%;
+  /* Upgrade to WebP where supported */
+  @supports (-webkit-mask-image: -webkit-image-set(url('/bg/mask@1x.webp') 1x)) {
+    .app-mask {
+      -webkit-mask-image: -webkit-image-set(
+        url('/bg/mask@1x.webp') 1x,
+        url('/bg/mask@2x.webp') 2x
+      );
+              mask-image: image-set(
+        url('/bg/mask@1x.webp') 1x type('image/webp'),
+        url('/bg/mask@2x.webp') 2x type('image/webp')
+      );
+      -webkit-mask-repeat: no-repeat;  mask-repeat: no-repeat;
+      -webkit-mask-position: center;   mask-position: center;
+      -webkit-mask-size: cover;        mask-size: cover;
+    }
   }
-}
 
-.header-gradient {
-  background: radial-gradient(circle at 20% 80%, rgba(120, 0, 255, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 100, 0, 0.3) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(0, 255, 200, 0.2) 0%, transparent 50%),
-    linear-gradient(135deg, #1a0033 0%, #0d001a 30%, #001a0d 100%);
-}
+  /* If your asset is white-on-black (no alpha), use luminance instead: */
+  .app-mask-luma {
+    -webkit-mask-image: url('/bg/mask@2x.png');
+            mask-image: url('/bg/mask@2x.png');
+    -webkit-mask-mode: luminance;
+            mask-mode: luminance;
+    -webkit-mask-repeat: no-repeat;  mask-repeat: no-repeat;
+    -webkit-mask-position: center;   mask-position: center;
+    -webkit-mask-size: cover;        mask-size: cover;
+  }
+  @supports (-webkit-mask-image: -webkit-image-set(url('/bg/mask@1x.webp') 1x)) {
+    .app-mask-luma {
+      -webkit-mask-image: -webkit-image-set(
+        url('/bg/mask@1x.webp') 1x,
+        url('/bg/mask@2x.webp') 2x
+      );
+              mask-image: image-set(
+        url('/bg/mask@1x.webp') 1x type('image/webp'),
+        url('/bg/mask@2x.webp') 2x type('image/webp')
+      );
+      -webkit-mask-mode: luminance;
+              mask-mode: luminance;
+    }
+  }
 
-.custom-segmented-control {
-  background: rgba(17, 24, 39, 0.6) !important;
-  backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(147, 51, 234, 0.3);
-  padding: 16px;
-  border-radius: 0;
-}
-
-.custom-segmented-control .segmented-control-item {
-  padding: 12px 16px !important;
-  font-size: 16px !important;
-  min-height: 48px !important;
+  /* Content that should appear above the global mask */
+  .above-mask {
+    position: relative;
+    z-index: 2;
+  }
 }

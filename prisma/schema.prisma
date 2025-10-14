@@ -92,6 +92,8 @@ model AICompanion {
   isActive         Boolean          @default(true)
   created_at       DateTime         @default(now())
   updated_at       DateTime
+  imageSeed        String?
+  visualAppearance String?
 }
 
 model CompanionSelection {

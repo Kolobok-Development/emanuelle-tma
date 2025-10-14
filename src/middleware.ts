@@ -10,6 +10,18 @@ export async function middleware(request: NextRequest) {
 
     const { pathname } = request.nextUrl;
 
+    if (
+        pathname.startsWith("/_next") ||                 // build files
+        pathname.startsWith("/bg/") ||                   // your masks/images under /public/bg
+        pathname.startsWith("/locales/") ||              // i18n json
+        pathname === "/favicon.ico" ||
+        pathname === "/robots.txt" ||
+        pathname === "/sitemap.xml" ||
+        /\.[a-z0-9]+$/i.test(pathname)                   // any /file.ext (png, webp, css, js, etc.)
+      ) {
+        return NextResponse.next();
+      }
+
     const routeConfig: Record<string, "*" | true> = {
         
         //API Routes

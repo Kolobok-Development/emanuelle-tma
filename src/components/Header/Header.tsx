@@ -2,6 +2,9 @@
 
 import { Title, Text } from '@telegram-apps/telegram-ui';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { Card } from '../ui/card';
+import { Button } from '../ui/button';
 
 export const Header = () => {
   const pathname = usePathname();
@@ -39,29 +42,26 @@ export const Header = () => {
   const { title, subtitle } = getScreenInfo();
 
   return (
-    <div className="neon-grid-pattern fade-bottom-50">
-      <div className="px-4 py-4">
-        <Title level="1" weight="2" className="mb-2 text-white">{title}</Title>
-        <Text className="opacity-75 text-white">{subtitle}</Text>
-        <div className="flex items-center gap-3 mb-6 mt-4">
-          <div className="flex items-center bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2 border border-purple-500/30">
-            <div className="flex items-center gap-2">
-              <span className="text-xs">💎</span>
-              <span className="font-bold text-white text-sm">9</span>
-            </div>
-            <div className="w-px h-4 bg-white/20 mx-3"></div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs">⚡</span>
-              <span className="font-bold text-white text-sm">100</span>
-            </div>
-          </div>
-          <div className="ml-auto">
-            <button className="cosmic-button h-9 w-15 px-3 rounded-lg flex items-center justify-center">
-              <span className="text-white text-lg font-bold relative z-10">+</span>
-            </button>
-          </div>
-        </div>
+    <Card className='flex flex-row justify-between items-center w-full bg-muted p-4 pr-6 pl-6 mt-10'> 
+      <div className='flex flex-col'>
+        <p className='text-sm'>Good Morning</p>
+        <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>Maximilian</h3>
       </div>
-    </div>
+      <div className='relative flex items-center gap-4 bg-border p-2 pr-6 rounded-md'>
+        <div className='flex items-center gap-2'>
+          <Image objectFit='contain' src="/icons/dimaond.png" alt="Diamond" width={20} height={20} />
+          <p className="text-sm font-bold leading-normal tracking-[0.28px]">50</p>
+        </div>
+        
+        <div className='flex items-center gap-2'>
+          <Image objectFit='contain' src="/icons/energy.png" alt="Energy" width={20} height={20} />
+          <p className="text-sm font-bold leading-normal tracking-[0.28px]">100</p>
+        </div>
+        
+        <Button className='absolute -right-4 top-1/2 -translate-y-1/2 bg-primary w-8 h-8 p-0 flex items-center justify-center rounded-md z-10'>
+          <span className='text-white font-bold'>+</span>
+        </Button>
+      </div>
+    </Card>
   );
 };
