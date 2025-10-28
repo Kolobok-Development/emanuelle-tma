@@ -7,12 +7,15 @@ import { AICompanion } from "@prisma/client";
 import { Card, Skeleton } from "@telegram-apps/telegram-ui";
 import { CardCell } from "@telegram-apps/telegram-ui/dist/components/Blocks/Card/components/CardCell/CardCell";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import React from "react";
+import Link from "next/link";
 import useSWR from "swr";
 
 export default function Dashboard() {
     const t = useTranslations('i18n');
     const { user  } = useAppContext();
+    const router = useRouter();
 
     const { data, isLoading, error } = useSWR<{ companions: AICompanion[] }>('/api/companion/get-all', fetcher);
 
@@ -48,7 +51,7 @@ export default function Dashboard() {
             ) : (
               // Show actual data when loaded
               data?.companions?.map((friend, index) => (
-                <Card key={friend.id} type="ambient">
+                <Card key={index} type="ambient" onClick={() => router.push(`/companion/${friend.id}`)}>
                   <React.Fragment>
                     <img
                       alt="ai-companion"

@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
         // Page Routes - these require authentication
         "/": true,
         "/dashboard": "*",
+        "/companion/*": "*",
         "/shop": "*",
         "/tasks": "*",
         "/profile": "*",

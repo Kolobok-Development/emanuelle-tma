@@ -8,45 +8,41 @@ export const BottomNavigation = () => {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-2 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-xl bg-[#272a2f] flex justify-around items-center z-10 rounded-2xl text-xs border border-purple-500 shadow-xl shadow-purple-500/20 py-1 px-2">
+    <div className="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-xl bg-muted flex justify-around items-center z-10 rounded-2xl py-2 px-4">
       <Link
         href="/dashboard"
-        className={`flex flex-col items-center justify-center text-[#85827d] w-1/5 p-2 rounded-xl transition-all duration-200 hover:bg-[#1d2025] hover:text-white ${
-          pathname === "/dashboard" ? "bg-[#1d2025] text-purple-400" : ""
+        className={`flex items-center justify-center text-white w-1/5 p-4 rounded-xl transition-all duration-200 hover:text-white ${
+          pathname === "/dashboard" ? "bg-gradient-pink-purple text-white shadow-lg" : ""
         }`}
       >
-        <Home size={18} className="mb-0.5" />
-        <p className={`text-xs font-medium ${pathname === "/" ? "text-purple-400" : ""}`}>Главная</p>
+        <Home size={26} />
       </Link>
 
       <Link
         href="/shop"
-        className={`flex flex-col items-center justify-center text-[#85827d] w-1/5 p-2 rounded-xl transition-all duration-200 hover:bg-[#1d2025] hover:text-white ${
-          pathname === "/shop" ? "bg-[#1d2025] text-purple-400" : ""
+        className={`flex items-center justify-center text-white  w-1/5 p-4  rounded-xl transition-all duration-200 hover:text-white ${
+          pathname === "/shop" ? "bg-gradient-pink-purple text-white shadow-lg" : ""
         }`}
       >
-        <ShoppingBag size={18} className="mb-0.5" />
-        <p className={`text-xs font-medium ${pathname === "/shop" ? "text-purple-400" : ""}`}>Магазин</p>
+        <ShoppingBag size={26} />
       </Link>
 
       <Link
         href="/tasks"
-        className={`flex flex-col items-center justify-center text-[#85827d] w-1/5 p-2 rounded-xl transition-all duration-200 hover:bg-[#1d2025] hover:text-white ${
-          pathname === "/tasks" ? "bg-[#1d2025] text-purple-400" : ""
+        className={`flex items-center justify-center text-white  w-1/5 p-4 rounded-xl transition-all duration-200 hover:text-white ${
+          pathname === "/tasks" ? "bg-gradient-pink-purple text-white shadow-lg" : ""
         }`}
       >
-        <CheckSquare size={18} className="mb-0.5" />
-        <p className={`text-xs font-medium ${pathname === "/tasks" ? "text-purple-400" : ""}`}>Задания</p>
+        <CheckSquare size={26} />
       </Link>
 
       <Link
         href="/profile"
-        className={`flex flex-col items-center justify-center text-[#85827d] w-1/5 p-2 rounded-xl transition-all duration-200 hover:bg-[#1d2025] hover:text-white ${
-          pathname === "/profile" ? "bg-[#1d2025] text-purple-400" : ""
+        className={`flex items-center justify-center text-white  w-1/5 p-4  rounded-xl transition-all duration-200 hover:text-white ${
+          pathname === "/profile" ? "bg-gradient-pink-purple text-white shadow-lg" : ""
         }`}
       >
-        <User size={18} className="mb-0.5" />
-        <p className={`text-xs font-medium ${pathname === "/profile" ? "text-purple-400" : ""}`}>Профиль</p>
+        <User size={26} />
       </Link>
     </div>
   );
