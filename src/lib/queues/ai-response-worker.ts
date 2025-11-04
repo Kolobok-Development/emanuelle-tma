@@ -25,9 +25,9 @@ console.log('✅ Environment variables loaded successfully');
 const aiResponseWorker = new Worker(
   'ai-response',
   async (job: Job<AIResponseJobData>) => {
-    const { chatId, companion, username, dbChatId } = job.data;
+    const { chatId, companionName, companionPersonality, companionDescription, username, dbChatId } = job.data;
     
-    console.log(`Processing AI response job for chat ${chatId}, companion: ${companion.name}`);
+    console.log(`Processing AI response job for chat ${chatId}, companion: ${companionName}`);
     
     try {
       let conversationHistory: AIMessage[] = [];
@@ -41,15 +41,15 @@ const aiResponseWorker = new Worker(
         }
       }
 
-      console.log('Generating AI response for:', companion.name, 'with context length:', conversationHistory.length);
+      console.log('Generating AI response for:', companionName, 'with context length:', conversationHistory.length);
       
       await TelegramService.sendChatAction(chatId, 'typing');
       
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
-        companion.name,
-        companion.personality,
-        "",
+        companionName,
+        companionPersonality,
+        companionDescription,
         username
       );
 
@@ -99,7 +99,7 @@ const aiResponseWorker = new Worker(
     } catch (error) {
       console.error(`Error processing AI response job for chat ${chatId}:`, error);
       
-      const errorMessage = `<b>${companion.name}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
+      const errorMessage = `<b>${companionName}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
       await TelegramService.sendMessage(chatId, errorMessage);
       
       throw error;

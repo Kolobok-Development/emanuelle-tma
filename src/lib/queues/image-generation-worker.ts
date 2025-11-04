@@ -23,20 +23,20 @@ console.log('✅ Environment variables loaded successfully');
 const imageGenerationWorker = new Worker(
   'image-generation',
   async (job: Job<ImageGenerationJobData>) => {
-    const { chatId, companion, username, userPrompt } = job.data;
+    const { chatId, companionName, companionDescription, companionVisualAppearance, companionImageSeed, username, userPrompt } = job.data;
     
-    console.log(`Processing image generation job for chat ${chatId}, companion: ${companion.name}`);
+    console.log(`Processing image generation job for chat ${chatId}, companion: ${companionName}`);
     
     try {
       await TelegramService.sendChatAction(chatId, 'upload_photo');
       
-      console.log('Generating image for companion:', companion.name);
+      console.log('Generating image for companion:', companionName);
       
       const imageResponse = await ImageGenerationService.generateCompanionImage(
-        companion.name,
-        companion.description,
-        (companion as any).visualAppearance,
-        (companion as any).imageSeed,
+        companionName,
+        companionDescription,
+        companionVisualAppearance,
+        companionImageSeed,
         userPrompt
       );
 
@@ -47,7 +47,7 @@ const imageGenerationWorker = new Worker(
       if (imageResponse.status === 'processing') {
         console.log('Image generation is processing, ETA:', imageResponse.eta);
         
-        // const processingMessage = `<b>${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
+        // const processingMessage = `<b>${companionName}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
         // await TelegramService.sendMessage(chatId, processingMessage);
         
         if (imageResponse.fetch_result) {
@@ -60,7 +60,7 @@ const imageGenerationWorker = new Worker(
           if (polledResponse.status === 'success' && polledResponse.output && polledResponse.output.length > 0) {
             const imageUrl = polledResponse.output[0];
             
-            const caption = `<b>${companion.name}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
+            const caption = `<b>${companionName}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
             
             const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
             
@@ -81,7 +81,7 @@ const imageGenerationWorker = new Worker(
       if (imageResponse.status === 'success' && imageResponse.output && imageResponse.output.length > 0) {
         const imageUrl = imageResponse.output[0];
         
-        const caption = `${companion.name}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
+        const caption = `<b>${companionName}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
         
         const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
         
@@ -98,7 +98,7 @@ const imageGenerationWorker = new Worker(
     } catch (error) {
       console.error(`Error processing image generation job for chat ${chatId}:`, error);
       
-      const errorMessage = `<b>${companion.name}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
+      const errorMessage = `<b>${companionName}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
       await TelegramService.sendMessage(chatId, errorMessage);
       
       throw error;
