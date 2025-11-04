@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 const createPrismaClient = () => {
   return new PrismaClient({
-    log: ['error'],
+    log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error'],
     errorFormat: 'pretty',
     datasources: {
       db: {

@@ -15,13 +15,17 @@ export const aiResponseQueue = new Queue('ai-response', {
   connection: createRedisConnection(),
   defaultJobOptions: {
     removeOnComplete: 100,
-    removeOnFail: 50,
+    removeOnFail: false,
     attempts: 3,
     backoff: {
       type: 'exponential',
       delay: 2000,
     },
   },
+});
+
+export const aiResponseDLQ = new Queue('ai-response-dlq', {
+  connection: createRedisConnection(),
 });
 
 export async function queueAIResponse(

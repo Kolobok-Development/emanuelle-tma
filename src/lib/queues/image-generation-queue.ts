@@ -14,13 +14,17 @@ export const imageGenerationQueue = new Queue('image-generation', {
   connection: createRedisConnection(),
   defaultJobOptions: {
     removeOnComplete: 50,
-    removeOnFail: 25,
+    removeOnFail: false,
     attempts: 3,
     backoff: {
       type: 'exponential',
       delay: 5000,
     },
   },
+});
+
+export const imageGenerationDLQ = new Queue('image-generation-dlq', {
+  connection: createRedisConnection(),
 });
 
 export async function queueImageGeneration(

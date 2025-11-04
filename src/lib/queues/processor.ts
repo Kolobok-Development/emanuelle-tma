@@ -5,8 +5,8 @@ import { AIService, AIMessage } from '../ai';
 import { ImageGenerationService } from '../image-generation';
 import { TelegramService, InlineKeyboardMarkup } from '../telegram';
 import { ConversationService } from '../conversation';
-import { AIResponseJobData } from './ai-response-queue';
-import { ImageGenerationJobData } from './image-generation-queue';
+import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
+import { ImageGenerationJobData, imageGenerationDLQ, imageGenerationQueue } from './image-generation-queue';
 
 console.log('🚀 Starting Combined Queue Workers (AI Response + Image Generation)...');
 
@@ -37,7 +37,7 @@ const aiResponseWorker = new Worker(
       
       if (dbChatId) {
         try {
-          conversationHistory = await ConversationService.getFormattedConversationHistory(dbChatId, 15);
+          conversationHistory = await ConversationService.getTokenAwareConversationHistory(dbChatId);
         } catch (contextError) {
           console.error('Failed to retrieve conversation context:', contextError);
           conversationHistory = [];
@@ -52,7 +52,7 @@ const aiResponseWorker = new Worker(
         conversationHistory,
         companion.name,
         companion.personality,
-        companion.description,
+        "",
         username
       );
 
@@ -60,9 +60,25 @@ const aiResponseWorker = new Worker(
         throw new Error(aiResponse.error);
       }
 
-      if (dbChatId && aiResponse.message) {
+      if (!aiResponse.message || aiResponse.message.trim().length === 0) {
+        throw new Error('AI returned empty response');
+      }
+
+      const TELEGRAM_MAX_MESSAGE_LENGTH = 4096;
+      let responseMessage = aiResponse.message;
+
+      if (responseMessage.length > TELEGRAM_MAX_MESSAGE_LENGTH) {
+        console.warn(`Response message too long (${responseMessage.length} chars), truncating to ${TELEGRAM_MAX_MESSAGE_LENGTH}`);
+        responseMessage = responseMessage.substring(0, TELEGRAM_MAX_MESSAGE_LENGTH - 10) + '...';
+      }
+
+      responseMessage = responseMessage
+        .replace(/<script[^>]*>.*?<\/script>/gi, '') 
+        .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
+
+      if (dbChatId && responseMessage) {
         try {
-          await ConversationService.saveMessage(dbChatId, 'ASSISTANT', aiResponse.message, aiResponse.tokens_used);
+          await ConversationService.saveMessage(dbChatId, 'ASSISTANT', responseMessage, aiResponse.tokens_used);
         } catch (saveError) {
           console.error('Failed to save AI response to conversation history:', saveError);
         }
@@ -77,16 +93,16 @@ const aiResponseWorker = new Worker(
         ]]
       };
 
-      await TelegramService.sendMessage(chatId, aiResponse.message || "", 'HTML', actionButton);
+      await TelegramService.sendMessage(chatId, responseMessage, 'HTML', actionButton);
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       
-      return { success: true, response: aiResponse.message };
+      return { success: true, response: responseMessage };
       
     } catch (error) {
       console.error(`Error processing AI response job for chat ${chatId}:`, error);
       
-      const errorMessage = `${companion.name}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
+      const errorMessage = `<b>${companion.name}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
       await TelegramService.sendMessage(chatId, errorMessage);
       
       throw error;
@@ -99,6 +115,8 @@ const aiResponseWorker = new Worker(
       max: 5,
       duration: 60000, 
     },
+    lockDuration: 30000,
+    maxStalledCount: 1,
   }
 );
 
@@ -108,9 +126,32 @@ aiResponseWorker.on('completed', (job) => {
   }
 });
 
-aiResponseWorker.on('failed', (job, err) => {
+aiResponseWorker.on('failed', async (job, err) => {
   if (job) {
     console.error(`AI response job ${job.id} failed:`, err);
+    
+    if (job.attemptsMade >= (job.opts.attempts || 3)) {
+      console.log(`Moving job ${job.id} to dead letter queue after ${job.attemptsMade} attempts`);
+      try {
+        await aiResponseDLQ.add(
+          'failed-job',
+          {
+            originalJobId: job.id,
+            originalJobData: job.data,
+            error: err.message,
+            failedAt: new Date().toISOString(),
+            attemptsMade: job.attemptsMade,
+          },
+          {
+            removeOnComplete: false,
+            removeOnFail: false,
+          }
+        );
+        console.log(`Job ${job.id} moved to DLQ successfully`);
+      } catch (dlqError) {
+        console.error(`Failed to move job ${job.id} to DLQ:`, dlqError);
+      }
+    }
   }
 });
 
@@ -209,6 +250,8 @@ const imageGenerationWorker = new Worker(
       max: 3,
       duration: 60000,
     },
+    lockDuration: 120000,
+    maxStalledCount: 1,
   }
 );
 
@@ -218,9 +261,32 @@ imageGenerationWorker.on('completed', (job) => {
   }
 });
 
-imageGenerationWorker.on('failed', (job, err) => {
+imageGenerationWorker.on('failed', async (job, err) => {
   if (job) {
     console.error(`Image generation job ${job.id} failed:`, err);
+    
+    if (job.attemptsMade >= (job.opts.attempts || 3)) {
+      console.log(`Moving image generation job ${job.id} to dead letter queue after ${job.attemptsMade} attempts`);
+      try {
+        await imageGenerationDLQ.add(
+          'failed-job',
+          {
+            originalJobId: job.id,
+            originalJobData: job.data,
+            error: err.message,
+            failedAt: new Date().toISOString(),
+            attemptsMade: job.attemptsMade,
+          },
+          {
+            removeOnComplete: false,
+            removeOnFail: false,
+          }
+        );
+        console.log(`Image generation job ${job.id} moved to DLQ successfully`);
+      } catch (dlqError) {
+        console.error(`Failed to move image generation job ${job.id} to DLQ:`, dlqError);
+      }
+    }
   }
 });
 
@@ -228,22 +294,61 @@ imageGenerationWorker.on('error', (err) => {
   console.error('Image generation worker error:', err);
 });
 
-process.on('SIGINT', async () => {
-  console.log('🛑 Shutting down Combined Queue Workers...');
-  await Promise.all([
-    aiResponseWorker.close(),
-    imageGenerationWorker.close()
-  ]);
-  process.exit(0);
+let isShuttingDown = false;
+
+async function waitForActiveJobs(timeout: number = 30000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const checkInterval = setInterval(async () => {
+      try {
+        const activeAIJobs = await aiResponseQueue.getActive();
+        const activeImageJobs = await imageGenerationQueue.getActive();
+
+        if (activeAIJobs.length === 0 && activeImageJobs.length === 0) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      } catch (error) {
+        clearInterval(checkInterval);
+        reject(error);
+      }
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.warn('⚠️  Shutdown timeout - forcing exit');
+      reject(new Error('Shutdown timeout exceeded'));
+    }, timeout);
+  });
+}
+
+async function gracefulShutdown(): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log('🛑 Shutting down Combined Queue Workers gracefully...');
+
+  try {
+    await aiResponseWorker.close();
+    await imageGenerationWorker.close();
+    console.log('✅ Workers closed, waiting for active jobs to complete...');
+
+    await waitForActiveJobs(30000);
+    console.log('✅ All jobs completed, exiting');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  gracefulShutdown();
 });
 
-process.on('SIGTERM', async () => {
-  console.log('🛑 Shutting down Combined Queue Workers...');
-  await Promise.all([
-    aiResponseWorker.close(),
-    imageGenerationWorker.close()
-  ]);
-  process.exit(0);
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  gracefulShutdown();
 });
 
 process.on('uncaughtException', async (error) => {

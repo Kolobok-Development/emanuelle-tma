@@ -117,6 +117,13 @@ export class CacheService {
       if (companionId) {
         await this.delete(this.keys.companion(companionId));
       }
+    } catch (error) {
+      console.error('Cache invalidation error:', error);
+    }
+  }
+
+  static async invalidateAllCompanions(): Promise<void> {
+    try {
       await this.delete(this.keys.allCompanions());
     } catch (error) {
       console.error('Cache invalidation error:', error);
