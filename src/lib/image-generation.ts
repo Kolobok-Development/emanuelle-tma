@@ -162,61 +162,113 @@ export class ImageGenerationService {
     }
   }
 
-  static async pollForImageCompletion(fetchUrl: string): Promise<ImageGenerationResponse> {
+  static async pollForImageCompletion(
+    fetchUrl: string,
+    maxPollingTime: number = 300000,
+    initialDelay: number = 2000,
+    maxDelay: number = 10000
+  ): Promise<ImageGenerationResponse> {
     console.log(`Starting to poll for image completion: ${fetchUrl}`);
     
-    try {
-      const community = this.getCommunity();
+    const startTime = Date.now();
+    let attempt = 0;
+    let delay = initialDelay;
+    
+    const community = this.getCommunity();
+    const urlParts = fetchUrl.split('/');
+    const requestId = urlParts[urlParts.length - 1];
+    
+    while (Date.now() - startTime < maxPollingTime) {
+      attempt++;
+      console.log(`Polling attempt ${attempt} for request ID: ${requestId}`);
       
-      const urlParts = fetchUrl.split('/');
-      const requestId = urlParts[urlParts.length - 1];
-      
-      console.log(`Using SDK built-in fetch method for request ID: ${requestId}`);
-      
-      const response = await imageGenerationCircuitBreaker.execute(async () => {
-        return await community.fetch(requestId);
-      });
+      try {
+        const response = await imageGenerationCircuitBreaker.execute(async () => {
+          return await Promise.race([
+            community.fetch(requestId),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error('Polling request timeout')), 30000)
+            )
+          ]);
+        });
 
-      console.log('SDK fetch response:', response);
+        console.log(`Polling attempt ${attempt} response:`, response.status);
 
-      if (response.status === 'success' && response.output && response.output.length > 0) {
-        console.log('Image generation completed successfully using SDK fetch!');
-        return {
-          status: 'success',
-          output: response.output
-        };
-      } else if (response.status === 'error') {
-        return {
-          status: 'error',
-          error: response.message || 'Image generation failed'
-        };
-      } else {
-        return {
-          status: 'error',
-          error: 'Unexpected response status from SDK fetch'
-        };
+        if (response.status === 'success' && response.output && response.output.length > 0) {
+          console.log('Image generation completed successfully using SDK fetch!');
+          return {
+            status: 'success',
+            output: response.output
+          };
+        } else if (response.status === 'error') {
+          return {
+            status: 'error',
+            error: response.message || 'Image generation failed'
+          };
+        } else if (response.status === 'processing') {
+          const elapsed = Date.now() - startTime;
+          const remainingTime = maxPollingTime - elapsed;
+          
+          if (remainingTime <= 0) {
+            return {
+              status: 'error',
+              error: `Image generation timeout after ${Math.round(maxPollingTime / 1000)} seconds`
+            };
+          }
+          
+          const nextDelay = Math.min(delay, remainingTime);
+          console.log(`Image still processing, waiting ${nextDelay}ms before next poll (ETA: ${response.eta}s)`);
+          
+          await new Promise(resolve => setTimeout(resolve, nextDelay));
+          
+          delay = Math.min(delay * 2, maxDelay);
+        } else {
+          return {
+            status: 'error',
+            error: 'Unexpected response status from SDK fetch'
+          };
+        }
+      } catch (error: any) {
+        const elapsed = Date.now() - startTime;
+        const remainingTime = maxPollingTime - elapsed;
+        
+        if (error.message?.includes('Circuit breaker is OPEN')) {
+          return {
+            status: 'error',
+            error: 'Image generation service is temporarily unavailable. Please try again later.'
+          };
+        }
+        
+        if (error.message?.includes('Operation timeout') || error.message?.includes('Polling request timeout')) {
+          if (remainingTime <= 0) {
+            return {
+              status: 'error',
+              error: `Image polling timeout after ${Math.round(maxPollingTime / 1000)} seconds`
+            };
+          }
+          
+          console.warn(`Polling request timed out, retrying in ${delay}ms (${Math.round(remainingTime / 1000)}s remaining)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          delay = Math.min(delay * 2, maxDelay);
+          continue;
+        }
+        
+        if (remainingTime <= 0) {
+          return {
+            status: 'error',
+            error: `Failed to fetch image completion after ${Math.round(maxPollingTime / 1000)} seconds: ${error.message}`
+          };
+        }
+        
+        console.warn(`Polling error (attempt ${attempt}), retrying in ${delay}ms:`, error.message);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay = Math.min(delay * 2, maxDelay);
       }
-    } catch (error: any) {
-      console.error('Error using SDK fetch method:', error.message);
-      
-      if (error.message?.includes('Circuit breaker is OPEN')) {
-        return {
-          status: 'error',
-          error: 'Image generation service is temporarily unavailable. Please try again later.'
-        };
-      }
-      
-      if (error.message?.includes('Operation timeout')) {
-        return {
-          status: 'error',
-          error: 'Image polling request timed out. Please try again.'
-        };
-      }
-      
-      return {
-        status: 'error',
-        error: `Failed to fetch image completion: ${error.message}`
-      };
     }
+    
+    return {
+      status: 'error',
+      error: `Image polling timeout after ${Math.round(maxPollingTime / 1000)} seconds (${attempt} attempts)`
+    };
   }
 }

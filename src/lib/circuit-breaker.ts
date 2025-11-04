@@ -100,3 +100,9 @@ export const imageGenerationCircuitBreaker = new CircuitBreaker({
   timeout: 60000,
 });
 
+export const databaseCircuitBreaker = new CircuitBreaker({
+  failureThreshold: 5,
+  resetTimeout: 30000,
+  timeout: 10000,
+});
+

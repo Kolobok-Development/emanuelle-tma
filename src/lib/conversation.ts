@@ -1,5 +1,6 @@
 import { prisma } from '@/core/db/prisma';
 import { AIMessage } from './ai';
+import { databaseCircuitBreaker } from './circuit-breaker';
 
 const MAX_CONTEXT_TOKENS = 2000;
 
@@ -41,14 +42,16 @@ export class ConversationService {
     maxTokens: number = MAX_CONTEXT_TOKENS
   ): Promise<AIMessage[]> {
     try {
-      const messages = await prisma.message.findMany({
-        where: { chat_id: chatId },
-        orderBy: { created_at: 'desc' },
-        select: {
-          role: true,
-          content: true,
-          tokens_used: true,
-        },
+      const messages = await databaseCircuitBreaker.execute(async () => {
+        return await prisma.message.findMany({
+          where: { chat_id: chatId },
+          orderBy: { created_at: 'desc' },
+          select: {
+            role: true,
+            content: true,
+            tokens_used: true,
+          },
+        });
       });
 
       let totalTokens = 0;
@@ -72,8 +75,14 @@ export class ConversationService {
       console.log(`Selected ${selectedMessages.length} messages with ~${totalTokens} tokens (max: ${maxTokens})`);
       
       return selectedMessages;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching token-aware conversation history:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        console.warn('Database circuit breaker is OPEN, returning empty history');
+        return [];
+      }
+      
       return this.getFormattedConversationHistory(chatId, 15);
     }
   }
@@ -85,16 +94,24 @@ export class ConversationService {
     tokensUsed?: number
   ): Promise<void> {
     try {
-      await prisma.message.create({
-        data: {
-          chat_id: chatId,
-          role: role,
-          content: content,
-          tokens_used: tokensUsed,
-        },
+      await databaseCircuitBreaker.execute(async () => {
+        return await prisma.message.create({
+          data: {
+            chat_id: chatId,
+            role: role,
+            content: content,
+            tokens_used: tokensUsed,
+          },
+        });
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving message:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        console.warn('Database circuit breaker is OPEN, message not saved but continuing');
+        return;
+      }
+      
       throw error;
     }
   }
@@ -116,27 +133,36 @@ export class ConversationService {
 
   static async getOrCreateActiveChat(userId: string): Promise<string> {
     try {
-      let chat = await prisma.chat.findFirst({
-        where: {
-          user_id: userId,
-          is_active: true,
-        },
-        orderBy: { created_at: 'desc' },
-      });
-
-      if (!chat) {
-        // Create a new active chat if none exists
-        chat = await prisma.chat.create({
-          data: {
+      let chat = await databaseCircuitBreaker.execute(async () => {
+        return await prisma.chat.findFirst({
+          where: {
             user_id: userId,
             is_active: true,
           },
+          orderBy: { created_at: 'desc' },
+        });
+      });
+
+      if (!chat) {
+        chat = await databaseCircuitBreaker.execute(async () => {
+          return await prisma.chat.create({
+            data: {
+              user_id: userId,
+              is_active: true,
+            },
+          });
         });
       }
 
       return chat.id;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error getting or creating active chat:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        console.warn('Database circuit breaker is OPEN, using fallback chat ID');
+        return `fallback-${userId}-${Date.now()}`;
+      }
+      
       throw error;
     }
   }
