@@ -8,7 +8,9 @@ import { ConversationService } from '../conversation';
 import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
 import { ImageGenerationJobData, imageGenerationDLQ, imageGenerationQueue } from './image-generation-queue';
 
+console.warn('⚠️  DEPRECATED: Using combined worker. Consider using separate workers for better scalability.');
 console.log('🚀 Starting Combined Queue Workers (AI Response + Image Generation)...');
+console.log('💡 Tip: Use "npm run queue:worker:ai" and "npm run queue:worker:image" for independent scaling');
 
 // Validate required environment variables
 const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'MODELSLAB_KEY', 'DATABASE_URL'];
@@ -28,7 +30,7 @@ console.log('✅ Environment variables loaded successfully');
 const aiResponseWorker = new Worker(
   'ai-response',
   async (job: Job<AIResponseJobData>) => {
-    const { chatId, userMessage, companion, username, dbChatId } = job.data;
+    const { chatId, companion, username, dbChatId } = job.data;
     
     console.log(`Processing AI response job for chat ${chatId}, companion: ${companion.name}`);
     

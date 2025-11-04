@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "queue:worker": "tsx src/lib/queues/processor.ts",
+    "queue:worker:ai": "tsx src/lib/queues/ai-response-worker.ts",
+    "queue:worker:image": "tsx src/lib/queues/image-generation-worker.ts",
     "queue:test": "tsx src/scripts/test-queue-separation.ts",
     "cache:test": "tsx src/scripts/test-cache.ts",
     "seed:companions": "tsx src/scripts/seed-companions.ts",

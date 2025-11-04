@@ -3,11 +3,10 @@ import { Worker, Job } from 'bullmq';
 import { createRedisConnection, closeBullMQConnection } from '../redis';
 import { ImageGenerationService } from '../image-generation';
 import { TelegramService } from '../telegram';
-import { ImageGenerationJobData } from './image-generation-queue';
+import { ImageGenerationJobData, imageGenerationDLQ, imageGenerationQueue } from './image-generation-queue';
 
 console.log('🚀 Starting Image Generation Queue Worker...');
 
-// Validate required environment variables
 const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'MODELSLAB_KEY'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
@@ -36,6 +35,8 @@ const imageGenerationWorker = new Worker(
       const imageResponse = await ImageGenerationService.generateCompanionImage(
         companion.name,
         companion.description,
+        (companion as any).visualAppearance,
+        (companion as any).imageSeed,
         userPrompt
       );
 
@@ -46,8 +47,8 @@ const imageGenerationWorker = new Worker(
       if (imageResponse.status === 'processing') {
         console.log('Image generation is processing, ETA:', imageResponse.eta);
         
-        const processingMessage = `${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
-        await TelegramService.sendMessage(chatId, processingMessage);
+        // const processingMessage = `<b>${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
+        // await TelegramService.sendMessage(chatId, processingMessage);
         
         if (imageResponse.fetch_result) {
           console.log('Polling for image completion using fetch URL:', imageResponse.fetch_result);
@@ -59,7 +60,7 @@ const imageGenerationWorker = new Worker(
           if (polledResponse.status === 'success' && polledResponse.output && polledResponse.output.length > 0) {
             const imageUrl = polledResponse.output[0];
             
-            const caption = `${companion.name}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
+            const caption = `<b>${companion.name}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
             
             const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
             
@@ -97,7 +98,7 @@ const imageGenerationWorker = new Worker(
     } catch (error) {
       console.error(`Error processing image generation job for chat ${chatId}:`, error);
       
-      const errorMessage = `${companion.name}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
+      const errorMessage = `<b>${companion.name}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
       await TelegramService.sendMessage(chatId, errorMessage);
       
       throw error;
@@ -105,42 +106,113 @@ const imageGenerationWorker = new Worker(
   },
   {
     connection: createRedisConnection(),
-    concurrency: 1,
+    concurrency: parseInt(process.env.IMAGE_WORKER_CONCURRENCY || '1'),
     limiter: {
-      max: 3,
+      max: parseInt(process.env.IMAGE_WORKER_RATE_LIMIT || '3'),
       duration: 60000,
     },
+    lockDuration: 120000,
+    maxStalledCount: 1,
   }
 );
 
 imageGenerationWorker.on('completed', (job) => {
   if (job) {
-    console.log(`Image generation job ${job.id} completed successfully`);
+    console.log(`✅ Image generation job ${job.id} completed successfully`);
   }
 });
 
-imageGenerationWorker.on('failed', (job, err) => {
+imageGenerationWorker.on('failed', async (job, err) => {
   if (job) {
-    console.error(`Image generation job ${job.id} failed:`, err);
+    console.error(`❌ Image generation job ${job.id} failed:`, err);
+    
+    if (job.attemptsMade >= (job.opts.attempts || 3)) {
+      console.log(`📦 Moving image generation job ${job.id} to dead letter queue after ${job.attemptsMade} attempts`);
+      try {
+        await imageGenerationDLQ.add(
+          'failed-job',
+          {
+            originalJobId: job.id,
+            originalJobData: job.data,
+            error: err.message,
+            failedAt: new Date().toISOString(),
+            attemptsMade: job.attemptsMade,
+          },
+          {
+            removeOnComplete: false,
+            removeOnFail: false,
+          }
+        );
+        console.log(`✅ Image generation job ${job.id} moved to DLQ successfully`);
+      } catch (dlqError) {
+        console.error(`❌ Failed to move image generation job ${job.id} to DLQ:`, dlqError);
+      }
+    }
   }
 });
 
 imageGenerationWorker.on('error', (err) => {
-  console.error('Image generation worker error:', err);
+  console.error('❌ Image generation worker error:', err);
 });
 
-process.on('SIGINT', async () => {
-  console.log('🛑 Shutting down Image Generation Worker...');
-  await imageGenerationWorker.close();
-  await closeBullMQConnection();
-  process.exit(0);
+let isShuttingDown = false;
+
+async function waitForActiveJobs(timeout: number = 30000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const checkInterval = setInterval(async () => {
+      try {
+        const activeJobs = await imageGenerationQueue.getActive();
+
+        if (activeJobs.length === 0) {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      } catch (error) {
+        clearInterval(checkInterval);
+        reject(error);
+      }
+    }, 1000);
+
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      console.warn('⚠️  Shutdown timeout - forcing exit');
+      reject(new Error('Shutdown timeout exceeded'));
+    }, timeout);
+  });
+}
+
+async function gracefulShutdown(): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  console.log('🛑 Shutting down Image Generation Worker gracefully...');
+
+  try {
+    await imageGenerationWorker.close();
+    console.log('✅ Worker closed, waiting for active jobs to complete...');
+
+    await waitForActiveJobs(30000);
+    
+    await closeBullMQConnection();
+    console.log('✅ Redis connection closed');
+    
+    console.log('✅ All jobs completed, exiting');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during shutdown:', error);
+    await closeBullMQConnection();
+    process.exit(1);
+  }
+}
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  gracefulShutdown();
 });
 
-process.on('SIGTERM', async () => {
-  console.log('🛑 Shutting down Image Generation Worker...');
-  await imageGenerationWorker.close();
-  await closeBullMQConnection();
-  process.exit(0);
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  gracefulShutdown();
 });
 
 process.on('uncaughtException', async (error) => {
@@ -158,3 +230,5 @@ process.on('unhandledRejection', async (reason, promise) => {
 });
 
 console.log('✅ Image Generation Queue Worker is running and ready to process jobs!');
+console.log(`   - Concurrency: ${process.env.IMAGE_WORKER_CONCURRENCY || '1'}`);
+console.log(`   - Rate Limit: ${process.env.IMAGE_WORKER_RATE_LIMIT || '3'} jobs/minute`);
