@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { aiServiceCircuitBreaker } from './circuit-breaker';
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -24,22 +25,24 @@ export class AIService {
     }
 
     try {
-      const response = await axios.post(
-        this.API_URL,
-        {
-          key: apiKey,
-          model_id: this.MODEL_ID,
-          messages: messages,
-          max_tokens: this.MAX_TOKENS,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
+      const response = await aiServiceCircuitBreaker.execute(async () => {
+        return await axios.post(
+          this.API_URL,
+          {
             key: apiKey,
+            model_id: this.MODEL_ID,
+            messages: messages,
+            max_tokens: this.MAX_TOKENS,
           },
-          timeout: 30000, 
-        }
-      );
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              key: apiKey,
+            },
+            timeout: 30000, 
+          }
+        );
+      });
 
       console.log('AI response received:', response.data.message);
 
@@ -52,6 +55,18 @@ export class AIService {
       };
     } catch (error: any) {
       console.error('AI service error:', error.response?.data || error.message);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        return {
+          error: 'AI service is temporarily unavailable. Please try again later.',
+        };
+      }
+      
+      if (error.message?.includes('Operation timeout')) {
+        return {
+          error: 'AI service request timed out. Please try again.',
+        };
+      }
       
       if (error.response?.status === 429) {
         return {

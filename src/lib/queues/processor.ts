@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Worker, Job } from 'bullmq';
-import { createRedisConnection } from '../redis';
+import { createRedisConnection, closeBullMQConnection } from '../redis';
 import { AIService, AIMessage } from '../ai';
 import { ImageGenerationService } from '../image-generation';
 import { TelegramService, InlineKeyboardMarkup } from '../telegram';
@@ -333,10 +333,15 @@ async function gracefulShutdown(): Promise<void> {
     console.log('✅ Workers closed, waiting for active jobs to complete...');
 
     await waitForActiveJobs(30000);
+    
+    await closeBullMQConnection();
+    console.log('✅ Redis connection closed');
+    
     console.log('✅ All jobs completed, exiting');
     process.exit(0);
   } catch (error) {
     console.error('❌ Error during shutdown:', error);
+    await closeBullMQConnection();
     process.exit(1);
   }
 }
@@ -355,7 +360,8 @@ process.on('uncaughtException', async (error) => {
   console.error('Uncaught Exception:', error);
   await Promise.all([
     aiResponseWorker.close(),
-    imageGenerationWorker.close()
+    imageGenerationWorker.close(),
+    closeBullMQConnection()
   ]);
   process.exit(1);
 });
@@ -364,7 +370,8 @@ process.on('unhandledRejection', async (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   await Promise.all([
     aiResponseWorker.close(),
-    imageGenerationWorker.close()
+    imageGenerationWorker.close(),
+    closeBullMQConnection()
   ]);
   process.exit(1);
 });

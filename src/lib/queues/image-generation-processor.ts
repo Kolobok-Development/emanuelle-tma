@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { Worker, Job } from 'bullmq';
-import { createRedisConnection } from '../redis';
+import { createRedisConnection, closeBullMQConnection } from '../redis';
 import { ImageGenerationService } from '../image-generation';
 import { TelegramService } from '../telegram';
 import { ImageGenerationJobData } from './image-generation-queue';
@@ -132,24 +132,28 @@ imageGenerationWorker.on('error', (err) => {
 process.on('SIGINT', async () => {
   console.log('🛑 Shutting down Image Generation Worker...');
   await imageGenerationWorker.close();
+  await closeBullMQConnection();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('🛑 Shutting down Image Generation Worker...');
   await imageGenerationWorker.close();
+  await closeBullMQConnection();
   process.exit(0);
 });
 
 process.on('uncaughtException', async (error) => {
   console.error('Uncaught Exception:', error);
   await imageGenerationWorker.close();
+  await closeBullMQConnection();
   process.exit(1);
 });
 
 process.on('unhandledRejection', async (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   await imageGenerationWorker.close();
+  await closeBullMQConnection();
   process.exit(1);
 });
 

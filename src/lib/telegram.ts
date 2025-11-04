@@ -1,3 +1,5 @@
+import { telegramCircuitBreaker } from './circuit-breaker';
+
 export interface TelegramMessage {
   message_id: number;
   chat: { id: number };
@@ -48,24 +50,36 @@ export class TelegramService {
         payload.reply_markup = replyMarkup;
       }
 
-      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      const data = await telegramCircuitBreaker.execute(async () => {
+        const fetchResponse = await fetch(`${this.BASE_URL}${this.botToken}/sendMessage`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        return fetchResponse.json();
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.ok) {
         console.error('Failed to send Telegram message:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending Telegram message:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        console.warn('Telegram API circuit breaker is OPEN - service temporarily unavailable');
+        return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
+      }
+      
+      if (error.message?.includes('Operation timeout')) {
+        console.warn('Telegram API request timed out');
+        return { ok: false, error_code: 504, description: 'Request timeout' };
+      }
+      
       return null;
     }
   }
@@ -77,27 +91,33 @@ export class TelegramService {
     }
 
     try {
-      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendChatAction`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          action: action
-        })
+      const data = await telegramCircuitBreaker.execute(async () => {
+        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendChatAction`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: chatId,
+            action: action
+          })
+        });
+        return response.json();
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.ok) {
         console.error('Failed to send chat action:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending chat action:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
+        return null;
+      }
+      
       return null;
     }
   }
@@ -118,24 +138,30 @@ export class TelegramService {
         payload.text = text;
       }
 
-      const response = await fetch(`${this.BASE_URL}${this.botToken}/answerCallbackQuery`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      const data = await telegramCircuitBreaker.execute(async () => {
+        const response = await fetch(`${this.BASE_URL}${this.botToken}/answerCallbackQuery`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        return response.json();
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.ok) {
         console.error('Failed to answer callback query:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error answering callback query:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
+        return null;
+      }
+      
       return null;
     }
   }
@@ -156,21 +182,27 @@ export class TelegramService {
       formData.append('chat_id', chatId.toString());
       formData.append('photo', new Blob([new Uint8Array(photo)], { type: 'image/jpeg' }), 'image.jpg');
 
-      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
-        method: 'POST',
-        body: formData
+      const data = await telegramCircuitBreaker.execute(async () => {
+        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+          method: 'POST',
+          body: formData
+        });
+        return response.json();
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.ok) {
         console.error('Failed to send photo:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending photo:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
+        return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
+      }
+      
       return null;
     }
   }
@@ -197,24 +229,30 @@ export class TelegramService {
         payload.parse_mode = parseMode;
       }
 
-      const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+      const data = await telegramCircuitBreaker.execute(async () => {
+        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        return response.json();
       });
-
-      const data = await response.json();
       
-      if (!response.ok) {
+      if (!data.ok) {
         console.error('Failed to send photo from URL:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending photo from URL:', error);
+      
+      if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
+        return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
+      }
+      
       return null;
     }
   }

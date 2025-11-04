@@ -1,6 +1,7 @@
 import axios from 'axios';
 // @ts-ignore
 import { Client, Community } from 'modelslab';
+import { imageGenerationCircuitBreaker } from './circuit-breaker';
 
 export interface ImageGenerationRequest {
   prompt: string;
@@ -52,19 +53,21 @@ export class ImageGenerationService {
       
       console.log('Sending image generation request to ModelsLab API');
       
-      const response = await community.textToImage({
-        key: client.key,
-        prompt: request.prompt,
-        model_id: request.model_id || this.DEFAULT_MODEL_ID,
-        lora_model: request.lora_model || this.DEFAULT_LORA_MODEL,
-        width: parseInt(request.width || "1024"),
-        height: parseInt(request.height || "1024"),
-        negative_prompt: request.negative_prompt || this.DEFAULT_NEGATIVE_PROMPT,
-        num_inference_steps: parseInt(request.num_inference_steps || "28"),
-        scheduler: request.scheduler || "DPMSolverMultistepScheduler",
-        guidance_scale: parseFloat(request.guidance_scale || "5"),
-        enhance_prompt: request.enhance_prompt || false,
-        seed: request.seed ? parseInt(request.seed) : undefined
+      const response = await imageGenerationCircuitBreaker.execute(async () => {
+        return await community.textToImage({
+          key: client.key,
+          prompt: request.prompt,
+          model_id: request.model_id || this.DEFAULT_MODEL_ID,
+          lora_model: request.lora_model || this.DEFAULT_LORA_MODEL,
+          width: parseInt(request.width || "1024"),
+          height: parseInt(request.height || "1024"),
+          negative_prompt: request.negative_prompt || this.DEFAULT_NEGATIVE_PROMPT,
+          num_inference_steps: parseInt(request.num_inference_steps || "28"),
+          scheduler: request.scheduler || "DPMSolverMultistepScheduler",
+          guidance_scale: parseFloat(request.guidance_scale || "5"),
+          enhance_prompt: request.enhance_prompt || false,
+          seed: request.seed ? parseInt(request.seed) : undefined
+        });
       });
 
       console.log('Image generation response received:', response);
@@ -89,6 +92,20 @@ export class ImageGenerationService {
 
     } catch (error: any) {
       console.error('Image generation service error:', error.message);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        return {
+          status: 'error',
+          error: 'Image generation service is temporarily unavailable. Please try again later.'
+        };
+      }
+      
+      if (error.message?.includes('Operation timeout')) {
+        return {
+          status: 'error',
+          error: 'Image generation request timed out. Please try again.'
+        };
+      }
       
       if (error.message?.includes('rate limit')) {
         return {
@@ -156,7 +173,9 @@ export class ImageGenerationService {
       
       console.log(`Using SDK built-in fetch method for request ID: ${requestId}`);
       
-      const response = await community.fetch(requestId);
+      const response = await imageGenerationCircuitBreaker.execute(async () => {
+        return await community.fetch(requestId);
+      });
 
       console.log('SDK fetch response:', response);
 
@@ -179,6 +198,21 @@ export class ImageGenerationService {
       }
     } catch (error: any) {
       console.error('Error using SDK fetch method:', error.message);
+      
+      if (error.message?.includes('Circuit breaker is OPEN')) {
+        return {
+          status: 'error',
+          error: 'Image generation service is temporarily unavailable. Please try again later.'
+        };
+      }
+      
+      if (error.message?.includes('Operation timeout')) {
+        return {
+          status: 'error',
+          error: 'Image polling request timed out. Please try again.'
+        };
+      }
+      
       return {
         status: 'error',
         error: `Failed to fetch image completion: ${error.message}`
