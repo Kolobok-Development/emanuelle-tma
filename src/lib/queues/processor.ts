@@ -186,8 +186,8 @@ const imageGenerationWorker = new Worker(
       if (imageResponse.status === 'processing') {
         console.log('Image generation is processing, ETA:', imageResponse.eta);
         
-        const processingMessage = `<b>${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
-        await TelegramService.sendMessage(chatId, processingMessage);
+        // const processingMessage = `<b>${companion.name}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
+        // await TelegramService.sendMessage(chatId, processingMessage);
         
         if (imageResponse.fetch_result) {
           console.log('Polling for image completion using fetch URL:', imageResponse.fetch_result);

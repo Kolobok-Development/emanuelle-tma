@@ -193,7 +193,7 @@ export class TelegramService {
       };
 
       if (caption) {
-        payload.caption = caption;
+        // payload.caption = caption;
         payload.parse_mode = parseMode;
       }
 
