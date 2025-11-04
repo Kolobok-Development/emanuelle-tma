@@ -95,7 +95,7 @@ export class AIService {
         This is your description: ${companionDescription}.
 
         CRITICAL RESPONSE RULES - FOLLOW EXACTLY:
-        - You SHOULD respond in Russian language.
+        - You MUST reply in the language the user is using.
         - Write ONLY normal dialogue/text - NO asterisks, NO actions, NO descriptions
         - NEVER use *anything* - no asterisk actions like *smiles*, *leans in*, *whispers*, etc.
         - Write like you're texting a friend - natural, conversational, direct
