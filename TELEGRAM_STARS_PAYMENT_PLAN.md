@@ -552,12 +552,12 @@ const initialOffers = [
 ## 5. Implementation Checklist
 
 ### Backend
-- [ ] Install Telegram Bot API library
+- [*] Install Telegram Bot API library
 - [ ] Create bot API service wrapper
-- [ ] Add database fields (diamonds, energy to Users)
-- [ ] Create Offer model in schema
-- [ ] Create PaymentTransaction model
-- [ ] Run database migration
+- [] Add database fields (diamonds, energy to Users)
+- [*] Create Offer model in schema
+- [*] Create PaymentTransaction model
+- [*] Run database migration
 - [ ] Create seed script for initial offers
 - [ ] Create `/api/offers` route (GET offers)
 - [ ] Create `/api/payments/create` route

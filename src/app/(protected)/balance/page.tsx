@@ -3,25 +3,62 @@
 import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import useSWR from 'swr';
+import { fetcher } from '@/utils/fetcher';
+import { Spinner } from '@/components/ui/spinner';
+import { OfferType } from '@prisma/client';
 
-type BalanceOffer = {
+type Offer = {
   id: string;
+  offer_type: OfferType;
   title: string;
-  price: string;
+  description: string | null;
+  price_in_stars: number;
+  price_in_usd: number;
   diamonds: number;
   energy: number;
+  display_order: number;
+  is_active: boolean;
 };
 
-const comboOffers: BalanceOffer[] = [
-  { id: 'basic', title: 'Basic', price: '$100', diamonds: 100, energy: 100 },
-  { id: 'standart', title: 'Standart', price: '$250', diamonds: 250, energy: 250 },
-  { id: 'amateur', title: 'Amateur', price: '$500', diamonds: 500, energy: 500 },
-  { id: 'pro', title: 'Pro+', price: '$1000', diamonds: 1000, energy: 1000 },
-];
+type OffersResponse = {
+  success: boolean;
+  offers: Offer[];
+};
+
+// Format price for display (convert stars to USD equivalent)
+function formatPrice(priceInStars: number): string {
+  // Assuming 1 Star ≈ $0.01, so divide by 100
+  const usdAmount = priceInStars / 100;
+  return `$${usdAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+}
 
 export default function BalancePage() {
+  const { data, isLoading, error } = useSWR<OffersResponse>('/api/offers', fetcher);
+
+  // Filter offers by type
+  const comboOffers = data?.offers.filter((offer) => offer.offer_type === 'COMBO') || [];
+  const energyOffers = data?.offers.filter((offer) => offer.offer_type === 'ENERGY') || [];
+  const diamondOffers = data?.offers.filter((offer) => offer.offer_type === 'DIAMOND') || [];
+
+  if (isLoading) {
+    return (
+      <div className="relative flex flex-1 flex-col items-center justify-center px-4">
+        <Spinner className="size-8 text-primary" />
+        <p className="mt-4 text-sm text-white/70">Loading offers...</p>
+      </div>
+    );
+  }
+
+  if (error || !data?.success) {
+    return (
+      <div className="relative flex flex-1 flex-col items-center justify-center px-4">
+        <p className="text-sm text-red-400">Failed to load offers. Please try again.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-1 flex-col items-center px-4">
       <Tabs defaultValue="combo" className="absolute -top-4 w-[85%] max-w-md">
@@ -48,25 +85,37 @@ export default function BalancePage() {
 
         <TabsContent value="energy" className="mt-10">
           <section className="grid grid-cols-2 gap-4">
-            {comboOffers.map((offer) => (
-              <EnergyOfferCard key={offer.id} offer={offer} />
-            ))}
+            {energyOffers.length > 0 ? (
+              energyOffers.map((offer) => (
+                <EnergyOfferCard key={offer.id} offer={offer} />
+              ))
+            ) : (
+              <p className="col-span-2 text-center text-sm text-white/70">No energy offers available</p>
+            )}
           </section>
         </TabsContent>
 
         <TabsContent value="combo" className="mt-10 ">
           <section className="space-y-4">
-            {comboOffers.map((offer) => (
-              <OfferCard key={offer.id} offer={offer} />
-            ))}
+            {comboOffers.length > 0 ? (
+              comboOffers.map((offer) => (
+                <OfferCard key={offer.id} offer={offer} />
+              ))
+            ) : (
+              <p className="text-center text-sm text-white/70">No combo offers available</p>
+            )}
           </section>
         </TabsContent>
 
         <TabsContent value="diamonds" className="mt-10">
           <section className="grid grid-cols-2 gap-4">
-            {comboOffers.map((offer) => (
-              <DiamondOfferCard key={offer.id} offer={offer} />
-            ))}
+            {diamondOffers.length > 0 ? (
+              diamondOffers.map((offer) => (
+                <DiamondOfferCard key={offer.id} offer={offer} />
+              ))
+            ) : (
+              <p className="col-span-2 text-center text-sm text-white/70">No diamond offers available</p>
+            )}
           </section>
         </TabsContent>
       </Tabs>
@@ -74,7 +123,7 @@ export default function BalancePage() {
   );
 }
 
-function OfferCard({ offer }: { offer: BalanceOffer }) {
+function OfferCard({ offer }: { offer: Offer }) {
   return (
     <Card className="relative overflow-hidden rounded-md border border-primary/40 bg-muted p-4 shadow-[0_0_35px_rgba(219,122,230,0.22)]">
       <div className="relative flex items-center gap-3">
@@ -100,7 +149,7 @@ function OfferCard({ offer }: { offer: BalanceOffer }) {
         </div>
 
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className="text-xl font-semibold text-primary">{offer.price}</span>
+          <span className="text-xl font-semibold text-primary">{formatPrice(offer.price_in_stars)}</span>
           <Button
             type="button"
             className="rounded-md bg-gradient-pink-purple px-6 text-sm font-semibold  text-white shadow-[0_0_20px_rgba(255,108,240,0.35)] transition-transform duration-200 hover:scale-[0.97]"
@@ -113,7 +162,7 @@ function OfferCard({ offer }: { offer: BalanceOffer }) {
   );
 }
 
-function EnergyOfferCard({ offer }: { offer: BalanceOffer }) {
+function EnergyOfferCard({ offer }: { offer: Offer }) {
   return (
     <Card className="overflow-hidden rounded-2xl border border-secondary ">
       <CardContent className="flex flex-row items-center gap-2 p-4  bg-black justify-between">
@@ -126,13 +175,13 @@ function EnergyOfferCard({ offer }: { offer: BalanceOffer }) {
       
       <CardFooter className="relative border-t p-3 justify-center overflow-hidden">
       <div className="absolute inset-0 bg-secondary opacity-10 w-full h-full" aria-hidden="true" />
-        <span className="relative z-10 text-xl font-bold text-secondary">{offer.price}</span>
+        <span className="relative z-10 text-xl font-bold text-secondary">{formatPrice(offer.price_in_stars)}</span>
       </CardFooter>
     </Card>
   );
 }
 
-function DiamondOfferCard({ offer }: { offer: BalanceOffer }) {
+function DiamondOfferCard({ offer }: { offer: Offer }) {
   return (
     <Card className="overflow-hidden rounded-2xl border border-primary ">
       <CardContent className="flex flex-row items-center gap-2 p-4  bg-black justify-between">
@@ -145,7 +194,7 @@ function DiamondOfferCard({ offer }: { offer: BalanceOffer }) {
       
       <CardFooter className="relative border-t p-3 justify-center overflow-hidden">
         <div className="absolute inset-0 bg-primary opacity-10 w-full h-full" aria-hidden="true" />
-        <span className=" z-10 text-xl font-bold text-primary">{offer.price}</span>
+        <span className=" z-10 text-xl font-bold text-primary">{formatPrice(offer.price_in_stars)}</span>
       </CardFooter>
     </Card>
   );

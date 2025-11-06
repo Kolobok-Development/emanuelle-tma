@@ -28,6 +28,7 @@ export async function middleware(request: NextRequest) {
         "/api/auth/authenticate-user": true, // Public - used for initial authentication
         "/api/auth/me": "*", // Protected - requires JWT to get user data
         "/api/companion/*": "*", // Protected - requires JWT to access companion data
+        "/api/offers": "*", // Protected - requires JWT to get offers
       
         // Page Routes - these require authentication
         "/": true,
