@@ -1,0 +1,4 @@
+Here are the resourses that are showing how to intefrate telegram starts pyaments:
+https://blog.octalabs.com/telegram-stars-payment-integration-in-mini-app-2f1d4d8098be
+https://cakeinpanic.medium.com/telegram-payments-via-stars-5972850bbc42
+https://www.youtube.com/watch?v=XOLOW8qUSdw
