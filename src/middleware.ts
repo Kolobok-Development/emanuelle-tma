@@ -36,6 +36,7 @@ export async function middleware(request: NextRequest) {
         "/shop": "*",
         "/tasks": "*",
         "/profile": "*",
+        "/balance": "*",
         
 
     }

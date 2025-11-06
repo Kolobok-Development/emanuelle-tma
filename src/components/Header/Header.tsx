@@ -1,13 +1,14 @@
 'use client';
 
 import { Title, Text } from '@telegram-apps/telegram-ui';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 
 export const Header = () => {
   const pathname = usePathname();
+  const router = useRouter();
 
   const getScreenInfo = () => {
     switch (pathname) {
@@ -58,7 +59,15 @@ export const Header = () => {
           <p className="text-sm font-bold leading-normal tracking-[0.28px]">100</p>
         </div>
         
-        <Button className='absolute -right-4 top-1/2 -translate-y-1/2 bg-primary w-8 h-8 p-0 flex items-center justify-center rounded-md z-10'>
+        <Button
+          type="button"
+          onClick={() => {
+            if (pathname !== '/balance') {
+              router.push('/balance');
+            }
+          }}
+          className='absolute -right-4 top-1/2 -translate-y-1/2 bg-primary w-8 h-8 p-0 flex items-center justify-center rounded-md z-10'
+        >
           <span className='text-white font-bold'>+</span>
         </Button>
       </div>

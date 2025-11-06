@@ -1,19 +1,45 @@
 'use client';
+
 import { Page } from "@/components/Page";
-import { useAppContext } from "@/context/AppContext";
-import { headers } from "next/headers";
+import { ReactNode, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import { BalanceHeader } from "@/components/Header/BalanceHeader";
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+type ProtectedLayoutProps = {
+    children: ReactNode;
+};
 
-
+export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     const pathname = usePathname();
+
     const noBackRoutes = ['/dashboard'];
     const shouldShowBack = !noBackRoutes.includes(pathname);
-    
-           return (
-            <Page back={shouldShowBack}>
-                {children}
-            </Page>
-           )
+
+    const pageConfig = useMemo(() => {
+        if (pathname === '/balance') {
+            return {
+                header: <BalanceHeader />,
+            };
+        }
+
+        if (pathname?.startsWith('/companion/')) {
+            return {
+                showHeader: true,
+            };
+        }
+
+        return {};
+    }, [pathname]);
+
+    const showHeader = pageConfig.showHeader ?? true;
+
+    return (
+        <Page
+            back={shouldShowBack}
+            header={pageConfig.header}
+            showHeader={showHeader}
+        >
+            {children}
+        </Page>
+    );
 }
