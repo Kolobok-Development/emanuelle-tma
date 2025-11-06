@@ -1,4 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
+import { NextRequest } from "next/server";
+import { prisma } from "@/core/db/prisma";
 
 const key = new TextEncoder().encode(process.env.JWT_SECRET);
 
@@ -47,4 +49,50 @@ export function clearSessionCookie() {
     path: '/',
     expires: new Date(0),
   };
+}
+
+export function getSessionToken(request: NextRequest): string | null {
+  return request.cookies.get(COOKIE_NAME)?.value || null;
+}
+
+export async function getSessionPayload(token: string): Promise<Record<string, unknown> | null> {
+  try {
+    return await decrypt(token);
+  } catch {
+    return null;
+  }
+}
+
+export async function getServerSession(request: NextRequest) {
+  const token = getSessionToken(request);
+  
+  if (!token) {
+    return null;
+  }
+
+  const payload = await getSessionPayload(token);
+  if (!payload) {
+    return null;
+  }
+
+  try {
+    const session = await prisma.session.findFirst({
+      where: { token },
+      include: { 
+        user: { 
+          include: { 
+            settings: true 
+          } 
+        } 
+      }
+    });
+
+    if (!session || session.expires_at < new Date()) {
+      return null;
+    }
+
+    return session;
+  } catch {
+    return null;
+  }
 }

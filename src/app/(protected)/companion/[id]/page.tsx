@@ -9,6 +9,9 @@ import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+import { closeMiniApp } from '@telegram-apps/sdk';
+
+
 type AICompanion = {
   id: string;
   name: string;
@@ -27,6 +30,8 @@ export default function CompanionPage() {
 
   const { data, isLoading } = useSWR<GetAllResponse>('/api/companion/get-all', fetcher);
 
+  const [isChatInitiated, setIsChatInitiated] = React.useState(false);
+
   const companion: AICompanion | undefined = React.useMemo(() => {
     if (!data?.companions || !companionId) return undefined;
     return data.companions.find((c) => c.id === companionId);
@@ -40,6 +45,23 @@ export default function CompanionPage() {
       .filter(Boolean)
       .slice(0, 5);
   }, [companion]);
+
+  const goToChat = async () => {
+    setIsChatInitiated(true)
+      try {
+        await fetch('/api/companion/initiate-chat', {
+          method: 'POST',
+          body: JSON.stringify({
+            companionId,
+          }),
+        });
+
+        closeMiniApp()
+
+      } catch (error) {
+        // show error message
+      }
+  }
 
   return (
     <div className="px-4 pb-28">
@@ -102,7 +124,7 @@ export default function CompanionPage() {
         </CardContent>
       </Card>
        <div className="absolute left-1/2 transform -translate-x-1/2 -mt-5">
-             <Button className="bg-gradient-pink-purple text-white font-bold px-6 py-6 h-12 rounded-xl max-w-md">
+             <Button disabled={isChatInitiated} className="bg-gradient-pink-purple text-white font-bold px-6 py-6 h-12 rounded-xl max-w-md" onClick={goToChat}>
                Go to the chat
              </Button>
        </div>

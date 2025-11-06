@@ -105,6 +105,40 @@ model CompanionSelection {
   companion        AICompanion @relation(fields: [companion_id], references: [id], onDelete: Cascade)
 }
 
+model Offers {
+  id             String    @id
+  offer_type     OfferType
+  title          String
+  description    String?
+  price_in_stars Int
+  price_in_usd   Decimal   @db.Decimal(10, 2)
+  diamonds       Int       @default(0)
+  energy         Int       @default(0)
+  display_order  Int       @default(0)
+  is_active      Boolean   @default(true)
+  created_at     DateTime  @default(now())
+  updated_at     DateTime
+}
+
+model PaymentTransactions {
+  id            String        @id
+  user_id       String
+  offer_id      String?
+  invoice_id    String?
+  payload       String?
+  amount        Int
+  amount_in_usd Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime
+  completed_at  DateTime?
+
+  @@index([invoice_id])
+  @@index([offer_id])
+  @@index([status])
+  @@index([user_id])
+}
+
 enum SubscriptionTier {
   FREE
   BASIC
@@ -116,4 +150,17 @@ enum ChatRole {
   USER
   ASSISTANT
   SYSTEM
+}
+
+enum OfferType {
+  COMBO
+  ENERGY
+  DIAMOND
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
 }

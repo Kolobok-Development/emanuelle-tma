@@ -66,20 +66,21 @@ const gracefulShutdown = async () => {
   console.log('Prisma client disconnected')
 }
 
-// Handle different exit signals
-process.on('SIGINT', async () => {
-  console.log('Received SIGINT, shutting down gracefully...')
-  await gracefulShutdown()
-  process.exit(0)
-})
+if (typeof process !== 'undefined' && process.on) {
+  process.on('SIGINT', async () => {
+    console.log('Received SIGINT, shutting down gracefully...')
+    await gracefulShutdown()
+    process.exit(0)
+  })
 
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM, shutting down gracefully...')
-  await gracefulShutdown()
-  process.exit(0)
-})
+  process.on('SIGTERM', async () => {
+    console.log('Received SIGTERM, shutting down gracefully...')
+    await gracefulShutdown()
+    process.exit(0)
+  })
 
-process.on('beforeExit', async () => {
-  console.log('Process is about to exit, disconnecting Prisma...')
-  await gracefulShutdown()
-})
+  process.on('beforeExit', async () => {
+    console.log('Process is about to exit, disconnecting Prisma...')
+    await gracefulShutdown()
+  })
+}
