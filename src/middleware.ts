@@ -29,6 +29,7 @@ export async function middleware(request: NextRequest) {
         "/api/auth/me": "*", // Protected - requires JWT to get user data
         "/api/bot/webhook": true, // Public - used for webhook
         "/api/companion/*": "*", // Protected - requires JWT to access companion data
+        "/api/offers": "*", // Protected - requires JWT to get offers
       
         // Page Routes - these require authentication
         "/": true,
