@@ -5,6 +5,15 @@ const withNextIntl = createNextIntlPlugin("./src/core/i18n/i18n.ts");
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'storage.yandexcloud.net',
+        pathname: '**',
+      },
+    ],
+  },
 };
 
 export default withNextIntl(nextConfig);

@@ -81,19 +81,19 @@ model SubscriptionHistory {
 }
 
 model AICompanion {
-  id               String           @id
-  name             String           @unique
+  id               String               @id
+  name             String               @unique
   avatar           String
   description      String
   personality      String
-  visualAppearance String?         
-  imageSeed        String?         
-  energyCost       Int              @default(5)
-  isPremium        Boolean          @default(false)
-  subscriptionTier SubscriptionTier @default(FREE)
-  isActive         Boolean          @default(true)
-  created_at       DateTime         @default(now())
+  energyCost       Int                  @default(5)
+  isPremium        Boolean              @default(false)
+  subscriptionTier SubscriptionTier     @default(FREE)
+  isActive         Boolean              @default(true)
+  created_at       DateTime             @default(now())
   updated_at       DateTime
+  imageSeed        String?
+  visualAppearance String?
   selections       CompanionSelection[]
 }
 
