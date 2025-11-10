@@ -553,7 +553,6 @@ const initialOffers = [
 
 ### Backend
 - [*] Install Telegram Bot API library
-- [ ] Create bot API service wrapper
 - [] Add database fields (diamonds, energy to Users)
 - [*] Create Offer model in schema
 - [*] Create PaymentTransaction model
@@ -561,8 +560,8 @@ const initialOffers = [
 - [*] Create seed script for initial offers
 - [*] Create `/api/offers` route (GET offers)
 - [*] Create `/api/payments/create` route
-- [ ] Create `/api/payments/webhook` route
-- [ ] Add webhook signature verification
+- [*] Create `/api/payments/webhook` route
+- [*] Add webhook signature verification
 - [ ] Add transaction logging
 - [ ] Add error handling
 
