@@ -553,7 +553,7 @@ const initialOffers = [
 
 ### Backend
 - [*] Install Telegram Bot API library
-- [] Add database fields (diamonds, energy to Users)
+- [*] Add database fields (diamonds, energy to Users)
 - [*] Create Offer model in schema
 - [*] Create PaymentTransaction model
 - [*] Run database migration
