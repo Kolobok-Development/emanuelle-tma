@@ -43,8 +43,6 @@ export async function GET(request: NextRequest) {
               id: session.user.id,
               telegram_id: Number(session.user.telegram_id),
               username: session.user.username,
-              subscription_tier: session.user.subscription_tier,
-              subscription_expires: session.user.subscription_expires,
               settings: session.user.settings
             },
             session: {

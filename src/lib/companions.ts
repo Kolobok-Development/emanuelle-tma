@@ -110,7 +110,6 @@ export class CompanionService {
           imageSeed: 'emanuelle_consistent_12345',
           energyCost: 5,
           isPremium: false,
-          subscriptionTier: 'FREE' as const,
           isActive: true,
         },
         {
@@ -123,7 +122,6 @@ export class CompanionService {
           imageSeed: 'sophia_consistent_67890',
           energyCost: 5,
           isPremium: false,
-          subscriptionTier: 'FREE' as const,
           isActive: true,
         },
         {
@@ -136,7 +134,6 @@ export class CompanionService {
           imageSeed: 'luna_consistent_11111',
           energyCost: 5,
           isPremium: false,
-          subscriptionTier: 'FREE' as const,
           isActive: true,
         },
       ];
@@ -153,7 +150,6 @@ export class CompanionService {
             ...(companionData as any).imageSeed && { imageSeed: (companionData as any).imageSeed },
             energyCost: companionData.energyCost,
             isPremium: companionData.isPremium,
-            subscriptionTier: companionData.subscriptionTier,
             isActive: companionData.isActive,
             updated_at: new Date(),
           },
