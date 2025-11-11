@@ -46,8 +46,6 @@ export async function POST(request: NextRequest) {
         data: {
           telegram_id: BigInt(telegramUser.id), // Consistent BigInt
           username: telegramUser.username || null,
-          subscription_tier: "FREE",
-          subscription_expires: null,
           settings: {
             create: {
               tone: "friendly",
@@ -94,8 +92,6 @@ export async function POST(request: NextRequest) {
         id: user.id,
         telegram_id: Number(user.telegram_id), // Convert BigInt to Number for JSON serialization
         username: user.username,
-        subscription_tier: user.subscription_tier,
-        subscription_expires: user.subscription_expires,
         settings: user.settings,
       },
     });

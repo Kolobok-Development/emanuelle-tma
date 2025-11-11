@@ -1,6 +1,5 @@
 import { prisma } from '@/core/db/prisma';
 import { CacheService } from './cache';
-import { SubscriptionTier } from '@prisma/client';
 
 export class UserService {
   static async getOrCreateUserByTelegramId(telegramUserId: bigint, username?: string): Promise<string> {
@@ -22,7 +21,6 @@ export class UserService {
           data: {
             telegram_id: telegramUserId,
             username: username || null,
-            subscription_tier: 'FREE',
             settings: {
               create: {
                 tone: 'friendly',
@@ -88,7 +86,6 @@ export class UserService {
 
   static async updateUser(userId: string, data: Partial<{
     username: string;
-    subscription_tier: SubscriptionTier;
     subscription_expires: Date;
   }>): Promise<void> {
     try {

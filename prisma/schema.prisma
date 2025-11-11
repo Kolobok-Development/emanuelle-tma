@@ -15,14 +15,14 @@ model Users {
   username              String?
   gender                String?
   isTermsPolicyAccepted Boolean               @default(false)
-  subscription_tier     SubscriptionTier      @default(FREE)
-  subscription_expires  DateTime?
+  diamonds              Int                   @default(0)
+  energy                Int                   @default(0)
   created_at            DateTime              @default(now())
   updated_at            DateTime              @updatedAt
   chats                 Chat[]
   sessions              Session[]
-  subscription_history  SubscriptionHistory[]
   settings              UserSettings?
+  payment_transactions  PaymentTransactions[]
 }
 
 model UserSettings {
@@ -67,28 +67,14 @@ model Message {
   chat        Chat     @relation(fields: [chat_id], references: [id], onDelete: Cascade)
 }
 
-model SubscriptionHistory {
-  id             String           @id @default(uuid())
-  user_id        String
-  tier           SubscriptionTier
-  amount         Decimal          @db.Decimal(10, 2)
-  currency       String           @default("USD")
-  payment_method String?
-  status         String           @default("completed")
-  expires_at     DateTime
-  created_at     DateTime         @default(now())
-  user           Users            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-}
-
 model AICompanion {
-  id               String               @id
+  id               String               @id @default(uuid())
   name             String               @unique
   avatar           String
   description      String
   personality      String
   energyCost       Int                  @default(5)
   isPremium        Boolean              @default(false)
-  subscriptionTier SubscriptionTier     @default(FREE)
   isActive         Boolean              @default(true)
   created_at       DateTime             @default(now())
   updated_at       DateTime
@@ -106,22 +92,23 @@ model CompanionSelection {
 }
 
 model Offers {
-  id             String    @id
-  offer_type     OfferType
-  title          String
-  description    String?
-  price_in_stars Int
-  price_in_usd   Decimal   @db.Decimal(10, 2)
-  diamonds       Int       @default(0)
-  energy         Int       @default(0)
-  display_order  Int       @default(0)
-  is_active      Boolean   @default(true)
-  created_at     DateTime  @default(now())
-  updated_at     DateTime
+  id                   String                @id @default(uuid())
+  offer_type           OfferType
+  title                String
+  description          String?
+  price_in_stars       Int
+  price_in_usd         Decimal               @db.Decimal(10, 2)
+  diamonds             Int                   @default(0)
+  energy               Int                   @default(0)
+  display_order        Int                   @default(0)
+  is_active            Boolean               @default(true)
+  created_at           DateTime              @default(now())
+  updated_at           DateTime              @updatedAt
+  payment_transactions PaymentTransactions[]
 }
 
 model PaymentTransactions {
-  id            String        @id
+  id            String        @id @default(uuid())
   user_id       String
   offer_id      String?
   invoice_id    String?
@@ -130,20 +117,16 @@ model PaymentTransactions {
   amount_in_usd Decimal       @db.Decimal(10, 2)
   status        PaymentStatus @default(PENDING)
   created_at    DateTime      @default(now())
-  updated_at    DateTime
+  updated_at    DateTime      @updatedAt
   completed_at  DateTime?
+
+  user  Users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  offer Offers? @relation(fields: [offer_id], references: [id], onDelete: SetNull)
 
   @@index([invoice_id])
   @@index([offer_id])
   @@index([status])
   @@index([user_id])
-}
-
-enum SubscriptionTier {
-  FREE
-  BASIC
-  PREMIUM
-  ULTIMATE
 }
 
 enum ChatRole {

@@ -182,6 +182,7 @@ async function seedOffers() {
           energy: offer.energy,
           display_order: offer.display_order,
           is_active: offer.is_active,
+          updated_at: new Date(),
         },
       });
       console.log(`   ✓ Created ${offer.offer_type} - ${offer.title}`);

@@ -137,9 +137,7 @@ export async function POST(request: NextRequest) {
             await tx.users.update({
               where: { id: user.id },
               data: {
-                // @ts-ignore - These fields need to be added to Users model
                 diamonds: { increment: diamonds || 0 },
-                // @ts-ignore - These fields need to be added to Users model
                 energy: { increment: energy || 0 },
               },
             });

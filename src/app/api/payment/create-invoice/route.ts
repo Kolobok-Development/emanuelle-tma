@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
                 payload: JSON.stringify({
                     requestId,
                 }),
+                updated_at: new Date(),
             },
         });
 
