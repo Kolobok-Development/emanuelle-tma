@@ -19,7 +19,17 @@ export async function middleware(request: NextRequest) {
         pathname === "/sitemap.xml" ||
         /\.[a-z0-9]+$/i.test(pathname)                   // any /file.ext (png, webp, css, js, etc.)
       ) {
-        return NextResponse.next();
+        // Add CORS headers for _next static assets to allow ngrok
+        const response = NextResponse.next();
+        if (pathname.startsWith("/_next")) {
+          const origin = request.headers.get("origin");
+          if (origin && origin.includes("ngrok")) {
+            response.headers.set("Access-Control-Allow-Origin", origin);
+            response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+          }
+        }
+        return response;
       }
 
     const routeConfig: Record<string, "*" | true> = {
@@ -30,6 +40,8 @@ export async function middleware(request: NextRequest) {
         "/api/bot/webhook": true, // Public - used for webhook
         "/api/companion/*": "*", // Protected - requires JWT to access companion data
         "/api/offers": "*", // Protected - requires JWT to get offers
+        "/api/payment/create-invoice": "*", // Protected - requires JWT to create payments
+        "/api/payments/webhook": true, // Public - used for webhook
       
         // Page Routes - these require authentication
         "/": true,

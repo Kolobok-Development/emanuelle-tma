@@ -563,7 +563,7 @@ const initialOffers = [
 - [*] Create `/api/payments/webhook` route
 - [*] Add webhook signature verification
 - [ ] Add transaction logging
-- [ ] Add error handling
+- [*] Add error handling
 
 ### Frontend
 - [ ] Create `useTelegramPayment` hook

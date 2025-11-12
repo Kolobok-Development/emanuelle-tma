@@ -8,6 +8,8 @@ import useSWR from 'swr';
 import { fetcher } from '@/utils/fetcher';
 import { Spinner } from '@/components/ui/spinner';
 import { OfferType } from '@prisma/client';
+import { useTelegramPayment } from '@/hooks/useTelegramPayment';
+import { useEffect } from 'react';
 
 type Offer = {
   id: string;
@@ -35,12 +37,20 @@ function formatPrice(priceInStars: number): string {
 }
 
 export default function BalancePage() {
-  const { data, isLoading, error } = useSWR<OffersResponse>('/api/offers', fetcher);
+  const { data, isLoading, error, mutate } = useSWR<OffersResponse>('/api/offers', fetcher);
+  const { purchaseOffer, status, error: paymentError } = useTelegramPayment();
 
   // Filter offers by type
   const comboOffers = data?.offers.filter((offer) => offer.offer_type === 'COMBO') || [];
   const energyOffers = data?.offers.filter((offer) => offer.offer_type === 'ENERGY') || [];
   const diamondOffers = data?.offers.filter((offer) => offer.offer_type === 'DIAMOND') || [];
+
+  // Refresh data after successful payment
+  useEffect(() => {
+    if (status === 'success') {
+      mutate();
+    }
+  }, [status, mutate]);
 
   if (isLoading) {
     return (
@@ -61,6 +71,11 @@ export default function BalancePage() {
 
   return (
     <div className="relative flex flex-1 flex-col items-center px-4">
+      {paymentError && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 rounded-md bg-red-500/90 px-4 py-2 text-sm text-white">
+          {paymentError}
+        </div>
+      )}
       <Tabs defaultValue="combo" className="absolute -top-4 w-[85%] max-w-md">
         <TabsList className="mx-auto grid h-auto w-full grid-cols-3 rounded-xl border bg-border p-1">
           <TabsTrigger
@@ -87,7 +102,7 @@ export default function BalancePage() {
           <section className="grid grid-cols-2 gap-4">
             {energyOffers.length > 0 ? (
               energyOffers.map((offer) => (
-                <EnergyOfferCard key={offer.id} offer={offer} />
+                <EnergyOfferCard key={offer.id} offer={offer} onPurchase={purchaseOffer} isLoading={status === 'loading'} />
               ))
             ) : (
               <p className="col-span-2 text-center text-sm text-white/70">No energy offers available</p>
@@ -99,7 +114,7 @@ export default function BalancePage() {
           <section className="space-y-4">
             {comboOffers.length > 0 ? (
               comboOffers.map((offer) => (
-                <OfferCard key={offer.id} offer={offer} />
+                <OfferCard key={offer.id} offer={offer} onPurchase={purchaseOffer} isLoading={status === 'loading'} />
               ))
             ) : (
               <p className="text-center text-sm text-white/70">No combo offers available</p>
@@ -111,7 +126,7 @@ export default function BalancePage() {
           <section className="grid grid-cols-2 gap-4">
             {diamondOffers.length > 0 ? (
               diamondOffers.map((offer) => (
-                <DiamondOfferCard key={offer.id} offer={offer} />
+                <DiamondOfferCard key={offer.id} offer={offer} onPurchase={purchaseOffer} isLoading={status === 'loading'} />
               ))
             ) : (
               <p className="col-span-2 text-center text-sm text-white/70">No diamond offers available</p>
@@ -123,7 +138,7 @@ export default function BalancePage() {
   );
 }
 
-function OfferCard({ offer }: { offer: Offer }) {
+function OfferCard({ offer, onPurchase, isLoading }: { offer: Offer; onPurchase: (offerId: string) => Promise<void>; isLoading: boolean }) {
   return (
     <Card className="relative overflow-hidden rounded-md border border-primary/40 bg-muted p-4 shadow-[0_0_35px_rgba(219,122,230,0.22)]">
       <div className="relative flex items-center gap-3">
@@ -152,9 +167,11 @@ function OfferCard({ offer }: { offer: Offer }) {
           <span className="text-xl font-semibold text-primary">{formatPrice(offer.price_in_stars)}</span>
           <Button
             type="button"
-            className="rounded-md bg-gradient-pink-purple px-6 text-sm font-semibold  text-white shadow-[0_0_20px_rgba(255,108,240,0.35)] transition-transform duration-200 hover:scale-[0.97]"
+            onClick={() => onPurchase(offer.id)}
+            disabled={isLoading}
+            className="rounded-md bg-gradient-pink-purple px-6 text-sm font-semibold  text-white shadow-[0_0_20px_rgba(255,108,240,0.35)] transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Buy
+            {isLoading ? 'Processing...' : 'Buy'}
           </Button>
         </div>
       </div>
@@ -162,7 +179,7 @@ function OfferCard({ offer }: { offer: Offer }) {
   );
 }
 
-function EnergyOfferCard({ offer }: { offer: Offer }) {
+function EnergyOfferCard({ offer, onPurchase, isLoading }: { offer: Offer; onPurchase: (offerId: string) => Promise<void>; isLoading: boolean }) {
   return (
     <Card className="overflow-hidden rounded-2xl border border-secondary ">
       <CardContent className="flex flex-row items-center gap-2 p-4  bg-black justify-between">
@@ -174,14 +191,24 @@ function EnergyOfferCard({ offer }: { offer: Offer }) {
       </CardContent>
       
       <CardFooter className="relative border-t p-3 justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-secondary opacity-10 w-full h-full" aria-hidden="true" />
-        <span className="relative z-10 text-xl font-bold text-secondary">{formatPrice(offer.price_in_stars)}</span>
+        <div className="absolute inset-0 bg-secondary opacity-10 w-full h-full" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col items-center gap-2 w-full">
+          <span className="text-xl font-bold text-secondary">{formatPrice(offer.price_in_stars)}</span>
+          <Button
+            type="button"
+            onClick={() => onPurchase(offer.id)}
+            disabled={isLoading}
+            className="w-full rounded-md bg-secondary px-4 py-2 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Processing...' : 'Buy'}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
 }
 
-function DiamondOfferCard({ offer }: { offer: Offer }) {
+function DiamondOfferCard({ offer, onPurchase, isLoading }: { offer: Offer; onPurchase: (offerId: string) => Promise<void>; isLoading: boolean }) {
   return (
     <Card className="overflow-hidden rounded-2xl border border-primary ">
       <CardContent className="flex flex-row items-center gap-2 p-4  bg-black justify-between">
@@ -194,7 +221,17 @@ function DiamondOfferCard({ offer }: { offer: Offer }) {
       
       <CardFooter className="relative border-t p-3 justify-center overflow-hidden">
         <div className="absolute inset-0 bg-primary opacity-10 w-full h-full" aria-hidden="true" />
-        <span className=" z-10 text-xl font-bold text-primary">{formatPrice(offer.price_in_stars)}</span>
+        <div className="relative z-10 flex flex-col items-center gap-2 w-full">
+          <span className="text-xl font-bold text-primary">{formatPrice(offer.price_in_stars)}</span>
+          <Button
+            type="button"
+            onClick={() => onPurchase(offer.id)}
+            disabled={isLoading}
+            className="w-full rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? 'Processing...' : 'Buy'}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

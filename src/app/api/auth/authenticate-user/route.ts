@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let user = await prisma.users.findFirstOrThrow({
+    let user = await prisma.users.findFirst({
       where: { telegram_id: BigInt(telegramUser.id) }, // Changed from Number to BigInt
       include: { settings: true },
     });
