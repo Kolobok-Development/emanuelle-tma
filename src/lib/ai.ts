@@ -1,4 +1,6 @@
-import axios from 'axios';
+import { generateText } from 'ai';
+import { createXai } from '@ai-sdk/xai';
+import type { CoreMessage } from 'ai';
 import { aiServiceCircuitBreaker } from './circuit-breaker';
 
 export interface AIMessage {
@@ -13,48 +15,91 @@ export interface AIResponse {
 }
 
 export class AIService {
-  private static readonly API_URL = 'https://modelslab.com/api/v5/uncensored_chat';
-  private static readonly MODEL_ID = 'mistralai-Mistral-7B-Instruct-v0.3';
+  private static readonly MODEL_ID = 'grok-2';
   private static readonly MAX_TOKENS = 1000;
 
-  static async generateMessage(messages: AIMessage[]): Promise<AIResponse> {
-    const apiKey = process.env.MODELSLAB_KEY;
+  private static getXaiProvider() {
+    const apiKey = process.env.XAI_API_KEY;
     
     if (!apiKey) {
+      throw new Error('XAI_API_KEY environment variable is not set');
+    }
+
+    return createXai({
+      apiKey: apiKey,
+    });
+  }
+
+  static async generateMessage(messages: AIMessage[]): Promise<AIResponse> {
+    const apiKey = process.env.XAI_API_KEY;
+    
+    if (!apiKey) {
+      console.error('XAI_API_KEY environment variable is not set');
       return { error: 'AI service not configured' };
     }
 
+    if (!apiKey.startsWith('xai-')) {
+      console.warn('XAI_API_KEY does not start with "xai-". Please verify the key is correct.');
+    }
+
     try {
-      const response = await aiServiceCircuitBreaker.execute(async () => {
-        return await axios.post(
-          this.API_URL,
-          {
-            key: apiKey,
-            model_id: this.MODEL_ID,
-            messages: messages,
-            max_tokens: this.MAX_TOKENS,
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              key: apiKey,
-            },
-            timeout: 30000, 
+      const result = await aiServiceCircuitBreaker.execute(async () => {
+        const systemMessages = messages.filter(m => m.role === 'system');
+        const conversationMessages = messages.filter(m => m.role !== 'system');
+        const systemPrompt = systemMessages.map(m => m.content).join('\n');
+
+        if (conversationMessages.length === 0) {
+          throw new Error('No conversation messages provided. At least one user or assistant message is required.');
+        }
+
+        const xaiProvider = this.getXaiProvider();
+        const model = xaiProvider(this.MODEL_ID);
+
+        const formattedMessages: CoreMessage[] = conversationMessages.map(msg => {
+          if (msg.role === 'assistant') {
+            return {
+              role: 'assistant',
+              content: msg.content,
+            };
+          } else {
+            return {
+              role: 'user',
+              content: msg.content,
+            };
           }
-        );
+        });
+
+        console.log('Sending request to XAI API:', {
+          model: this.MODEL_ID,
+          systemPromptLength: systemPrompt.length,
+          messageCount: formattedMessages.length,
+          hasSystem: !!systemPrompt
+        });
+
+        return await generateText({
+          model: model,
+          system: systemPrompt || undefined,
+          messages: formattedMessages,
+          maxOutputTokens: this.MAX_TOKENS,
+        });
       });
 
-      console.log('AI response received:', response.data.message);
-
-      const extractedMessage = response.data?.message || response.data?.choices?.[0]?.message?.content || response.data?.response || '';
-      const extractedTokens = response.data?.total_tokens || response.data?.usage?.total_tokens || 0;
+      console.log('AI response received:', result.text);
 
       return {
-        message: extractedMessage,
-        tokens_used: extractedTokens,
+        message: result.text,
+        tokens_used: result.usage?.totalTokens || 0,
       };
     } catch (error: any) {
-      console.error('AI service error:', error.response?.data || error.message);
+      console.error('AI service error details:', {
+        message: error.message,
+        name: error.name,
+        status: error.status,
+        statusCode: error.statusCode,
+        cause: error.cause,
+        stack: error.stack?.substring(0, 500),
+        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2).substring(0, 1000)
+      });
       
       if (error.message?.includes('Circuit breaker is OPEN')) {
         return {
@@ -62,20 +107,30 @@ export class AIService {
         };
       }
       
-      if (error.message?.includes('Operation timeout')) {
+      if (error.message?.includes('timeout') || error.message?.includes('Timeout')) {
         return {
           error: 'AI service request timed out. Please try again.',
         };
       }
       
-      if (error.response?.status === 429) {
+      if (error.status === 429 || error.statusCode === 429 || error.message?.includes('rate limit')) {
         return {
           error: 'API rate limit exceeded. Please try again later.',
         };
       }
       
+      if (error.message?.includes('Not Found') || error.status === 404 || error.statusCode === 404) {
+        console.error('XAI API Not Found - Possible causes:');
+        console.error('1. Model name might be incorrect. Trying:', this.MODEL_ID);
+        console.error('2. API key might not have access to this model');
+        console.error('3. API key might be invalid');
+        return {
+          error: `AI model not found. Please check API key and model configuration. (Model: ${this.MODEL_ID})`,
+        };
+      }
+      
       return {
-        error: error.response?.data?.error || error.message || 'AI service unavailable',
+        error: error.message || error.toString() || 'AI service unavailable',
       };
     }
   }
@@ -95,7 +150,7 @@ export class AIService {
         This is your description: ${companionDescription}.
 
         CRITICAL RESPONSE RULES - FOLLOW EXACTLY:
-        - You MUST reply in the language the user is using.
+        - Always respond only in the language the user writes in. Do not translate your answers into any other language unless explicitly asked.
         - Write ONLY normal dialogue/text - NO asterisks, NO actions, NO descriptions
         - NEVER use *anything* - no asterisk actions like *smiles*, *leans in*, *whispers*, etc.
         - Write like you're texting a friend - natural, conversational, direct

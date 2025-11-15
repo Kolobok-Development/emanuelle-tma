@@ -12,15 +12,14 @@ console.warn('⚠️  DEPRECATED: Using combined worker. Consider using separate
 console.log('🚀 Starting Combined Queue Workers (AI Response + Image Generation)...');
 console.log('💡 Tip: Use "npm run queue:worker:ai" and "npm run queue:worker:image" for independent scaling');
 
-// Validate required environment variables
-const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'MODELSLAB_KEY', 'DATABASE_URL'];
+const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'XAI_API_KEY', 'DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
   console.error('💡 Please create a .env file with the required variables:');
   console.error('   TELEGRAM_BOT_KEY=your_telegram_bot_token');
-  console.error('   MODELSLAB_KEY=your_modelslab_api_key');
+  console.error('   XAI_API_KEY=your_xai_api_key');
   console.error('   DATABASE_URL=your_postgresql_connection_string');
   process.exit(1);
 }
