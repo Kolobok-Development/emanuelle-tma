@@ -1,10 +1,11 @@
 'use client';
 
-import { backButton } from '@telegram-apps/sdk-react';
+
 import { PropsWithChildren, ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomNavigation } from './BottomNavigation/BottomNavigation';
 import { Header } from './Header/Header';
+import { backButton } from '@tma.js/sdk-react';
 
 export function Page({ children, back = true, showHeader = true, header }: PropsWithChildren<{
   /**

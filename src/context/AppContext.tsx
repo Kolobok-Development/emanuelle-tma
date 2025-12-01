@@ -4,6 +4,7 @@ import {
   useSignal,
   initDataRaw as _initDataRaw,
 } from "@telegram-apps/sdk-react";
+import { useRawInitData } from "@tma.js/sdk-react";
 import { useContext, createContext, useState, useEffect, useRef } from "react";
 
 interface AppContextType {
@@ -26,9 +27,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const [initData, setInitData] = useState<string | null>(null);
 
-  const initDataRaw = useSignal(_initDataRaw);
+  //const initDataRaw = useSignal(_initDataRaw);
   const isAuthenticated = !!user && !!session;
   const [sessionStatus, setSessionStatus] = useState<"valid" | "invalid">();
+
+  const initDataRaw = useRawInitData();
 
   useEffect(() => {
     if (!initData && initDataRaw) {
@@ -108,6 +111,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const checkAuthStatus = async () => {
+      console.log("Checking auth status---->");
       try {
         setIsLoading(true);
 

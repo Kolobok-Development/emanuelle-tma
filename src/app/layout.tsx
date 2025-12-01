@@ -7,8 +7,6 @@ import { Root } from '@/components/Root/Root';
 import { I18nProvider } from '@/core/i18n/provider';
 import { Header } from '@/components/Header/Header';
 
-import '@telegram-apps/telegram-ui/dist/styles.css';
-import 'normalize.css/normalize.css';
 import './_assets/globals.css';
 
 // Configure Space Mono font

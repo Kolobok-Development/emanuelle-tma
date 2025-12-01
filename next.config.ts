@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         hostname: 'storage.yandexcloud.net',
         pathname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '**',
+      },
     ],
   },
 };

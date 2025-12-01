@@ -1,7 +1,8 @@
 // This file is normally used for setting up analytics and other
 // services that require one-time initialization on the client.
 
-import { retrieveLaunchParams } from '@telegram-apps/sdk-react';
+
+import { retrieveLaunchParams } from '@tma.js/sdk-react';
 import { init } from './core/init';
 import { mockEnv } from './mockEnv';
 
