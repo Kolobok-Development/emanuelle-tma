@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
         "/api/companion/*": "*", // Protected - requires JWT to access companion data
         "/api/offers": "*", // Protected - requires JWT to get offers
         "/api/payment/create-invoice": "*", // Protected - requires JWT to create payments
-        "/api/payments/webhook": true, // Public - used for webhook
+        "/api/payment/webhook": true, // Public - used for webhook
       
         // Page Routes - these require authentication
         "/": true,
