@@ -5,7 +5,12 @@ import { Card } from '@/components/ui/card';
 
 export function BalanceHeader() {
   return (
-    <div className="px-4 pt-6">
+    <div 
+      className="px-4 pt-6"
+      style={{
+        marginTop: `calc(var(--tg-viewport-safe-area-inset-top, 0px) + 3rem)`,
+      }}
+    >
       <Card className="relative overflow-hidden rounded-3xl border border-primary/40 bg-muted p-6 text-white">
         
         <div className="relative flex flex-col items-center ">

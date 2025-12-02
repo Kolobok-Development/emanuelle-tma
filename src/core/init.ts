@@ -96,6 +96,8 @@ export async function init(options: {
 
   if (viewport.bindCssVars.isAvailable()) {
     viewport.bindCssVars();
+    viewport.safeAreaInsetTop();
+    viewport.safeAreaInsets();
   }
 
 }

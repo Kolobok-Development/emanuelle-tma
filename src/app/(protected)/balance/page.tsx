@@ -9,7 +9,6 @@ import { useEffect } from 'react';
 import { OfferCard, OfferCardSkeleton } from '@/components/OfferCard/OfferCard';
 import { EnergyOfferCard, EnergyOfferCardSkeleton } from '@/components/EnergyOfferCard/EnergyOfferCard';
 import { DiamondOfferCard, DiamondOfferCardSkeleton } from '@/components/DiamondOfferCard/DiamondOfferCard';
-import { Spinner } from '@/components/ui/spinner';
 
 type Offer = {
   id: string;
@@ -60,18 +59,9 @@ export default function BalancePage() {
   return (
     <div className="relative flex flex-1 flex-col items-center px-4">
       {status === 'loading' && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-4 rounded-lg bg-card/95 p-8 shadow-lg">
-            <Spinner className="size-8 text-primary" />
-            <p className="text-sm font-medium text-foreground">Processing payment...</p>
-          </div>
-        </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" />
       )}
-      {paymentError && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 rounded-md bg-red-500/90 px-4 py-2 text-sm text-white">
-          {paymentError}
-        </div>
-      )}
+      
       <Tabs defaultValue="combo" className="absolute -top-4 w-[85%] max-w-md">
         <TabsList className="mx-auto grid h-auto w-full grid-cols-3 rounded-xl border bg-border p-1">
           <TabsTrigger

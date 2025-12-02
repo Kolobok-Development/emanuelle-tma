@@ -17,6 +17,7 @@ import { setLocale } from "@/core/i18n/locale";
 
 import "./styles.css";
 import { AppProvider } from "@/context/AppContext";
+import { Toaster } from "react-hot-toast";
 
 function RootInner({ children }: PropsWithChildren) {
   const lp = useLaunchParams();

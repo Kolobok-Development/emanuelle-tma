@@ -43,7 +43,12 @@ export const Header = () => {
   const { title, subtitle } = getScreenInfo();
 
   return (
-    <Card className='flex flex-row justify-between items-center w-full bg-muted p-4 pr-6 pl-6 mt-10'> 
+    <Card 
+      className='flex flex-row justify-between items-center w-full bg-muted p-4 pr-6 pl-6'
+      style={{
+        marginTop: `calc(var(--tg-viewport-safe-area-inset-top, 0px) + 4rem)`,
+      }}
+    > 
       <div className='flex flex-col'>
         <p className='text-sm'>Good Morning</p>
         <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>Maximilian</h3>
