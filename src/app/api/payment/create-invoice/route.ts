@@ -46,6 +46,7 @@ export async function POST(request: NextRequest) {
         }
 
         console.log('Offer found:', offer.title);
+
         const { title, description, price_in_stars, price_in_usd } = offer;
 
         const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
@@ -58,8 +59,9 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Generate a unique requestId using the crypto module
-        const requestId = crypto.randomUUID();
+        // Generate a unique requestId using the crypto module combined with date
+        const requestId = `${Date.now()}-${crypto.randomUUID()}`;
+
         console.log('Creating transaction with requestId:', requestId);
 
         await prisma.paymentTransactions.create({
@@ -77,6 +79,7 @@ export async function POST(request: NextRequest) {
         });
 
         console.log('Transaction created, calling Telegram API...');
+        
         const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`, {
             method: 'POST',
             headers: {
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
             body: JSON.stringify({
                 title,
                 description,
-                payload: offerId,
+                payload: requestId,
                 provider_token: '',
                 currency: 'XTR',
                 prices: [{label: title, amount: price_in_stars}],
@@ -93,7 +96,6 @@ export async function POST(request: NextRequest) {
         });
 
         const invoice = await response.json();
-        console.log('Telegram API response:', invoice);
 
         if (!invoice.ok) {
             console.error('Telegram API error:', invoice);
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
                 { status: 500 }
             );
         }
+
 
         const invoiceLink = invoice.result;
         console.log('Invoice created successfully:', invoiceLink);

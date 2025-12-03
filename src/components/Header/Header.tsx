@@ -5,10 +5,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
+import { useAppContext } from '@/context/AppContext';
 
 export const Header = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const { user, isBalanceRefetching } = useAppContext();
 
   const getScreenInfo = () => {
     switch (pathname) {
@@ -50,18 +52,26 @@ export const Header = () => {
       }}
     > 
       <div className='flex flex-col'>
-        <p className='text-sm'>Good Morning</p>
-        <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>Maximilian</h3>
+        <p className='text-sm'>Hello</p>
+        <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>{user?.username ?? 'Player'}</h3>
       </div>
       <div className='relative flex items-center gap-4 bg-border p-2 pr-6 rounded-md'>
         <div className='flex items-center gap-2'>
           <Image objectFit='contain' src="/icons/dimaond.png" alt="Diamond" width={20} height={20} />
-          <p className="text-sm font-bold leading-normal tracking-[0.28px]">50</p>
+          {isBalanceRefetching ? (
+            <div className="h-4 w-8 animate-pulse rounded bg-muted" />
+          ) : (
+            <p className="text-sm font-bold leading-normal tracking-[0.28px]">{user?.diamonds ?? 0}</p>
+          )}
         </div>
         
         <div className='flex items-center gap-2'>
           <Image objectFit='contain' src="/icons/energy.png" alt="Energy" width={20} height={20} />
-          <p className="text-sm font-bold leading-normal tracking-[0.28px]">100</p>
+          {isBalanceRefetching ? (
+            <div className="h-4 w-8 animate-pulse rounded bg-muted" />
+          ) : (
+            <p className="text-sm font-bold leading-normal tracking-[0.28px]">{user?.energy ?? 0}</p>
+          )}
         </div>
         
         <Button

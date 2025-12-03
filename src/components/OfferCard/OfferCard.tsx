@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 
 type Offer = {
   id: string;
   title: string;
   price_in_stars: number;
+  price_in_usd: number;
   diamonds: number;
   energy: number;
 };
@@ -17,48 +17,80 @@ interface OfferCardProps {
 }
 
 // Format price for display (convert stars to USD equivalent)
-function formatPrice(priceInStars: number): string {
+function formatPrice(price: number): string {
   // Assuming 1 Star ≈ $0.01, so divide by 100
-  const usdAmount = priceInStars / 100;
-  return `$${usdAmount.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  return `$${price.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 }
 
 export function OfferCard({ offer, onPurchase, isLoading }: OfferCardProps) {
   return (
-    <Card className="relative overflow-hidden rounded-md border border-primary/40 bg-muted p-4 shadow-[0_0_35px_rgba(219,122,230,0.22)]">
-      <div className="relative flex items-center gap-3">
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-primary/40 bg-primary/20">
-          <Image src="/icons/energy_and_dimonds.png" alt="Energy and Diamonds" width={48} height={48} />
+    <Card 
+      className="relative overflow-hidden rounded-[12px] border border-purple bg-card-dark p-4 flex gap-5 items-start cursor-pointer transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+      onClick={() => !isLoading && onPurchase(offer.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isLoading) {
+          e.preventDefault();
+          onPurchase(offer.id);
+        }
+      }}
+      aria-disabled={isLoading}
+    >
+      {/* Left section - Icon box */}
+      <div className="relative border border-purple rounded-lg bg-card-dark flex flex-col items-center justify-center px-0.5 py-2 shrink-0 size-[70px]">
+        <div className="relative h-12 w-[65px] flex items-center justify-center">
+          <Image 
+            src="/icons/energy_and_dimonds.png" 
+            alt="Energy and Diamonds" 
+            width={65} 
+            height={48} 
+            className="object-contain"
+          />
         </div>
+        {/* Gradient overlay on icon box */}
+        <div 
+          className="absolute inset-[-1px] opacity-40 rounded-lg"
+          style={{
+            backgroundImage: `radial-gradient(ellipse at center, rgba(255, 79, 191, 0.2) 0%, rgba(255, 79, 191, 0) 100%)`
+          }}
+        />
+      </div>
 
-        <div className="flex flex-1 flex-col gap-2 min-w-0">
-          <span className="text-xl font-semibold uppercase tracking-[0.28em] text-secondary ">{offer.title}</span>
-          <div className="w-full h-px bg-white/15" />
-
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2  text-xs text-white/90 ">
-              <span className="text-white text-[8px]">{offer.diamonds}</span>
-              <span className="text-white text-[8px]">diamonds</span>
-            </span>
-        
-            <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 text-xs   text-white/90 ">
-              <span className="text-white text-[8px]">{offer.energy}</span>
-              <span className="text-white text-[8px]">energy</span>
-            </span>
+      {/* Middle section - Title and badges */}
+      <div className="flex flex-col gap-3 items-start justify-center flex-1 min-w-0">
+        {/* Title with separator */}
+        <div className="flex flex-col items-start pb-px pt-0 px-0 w-full">
+          <p className="bg-gradient-to-r from-purple via-pink to-purple bg-clip-text text-transparent text-2xl font-bold uppercase tracking-[0.48px] w-full">
+            {offer.title}
+          </p>
+          {/* Separator */}
+          <div className="relative flex h-px items-center mb-[-1px] opacity-10 w-full">
+            <div className="absolute bg-white h-px left-0 right-0 top-1/2 translate-y-[-50%]" />
           </div>
         </div>
-
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <span className="text-xl font-semibold text-primary">{formatPrice(offer.price_in_stars)}</span>
-          <Button
-            type="button"
-            onClick={() => onPurchase(offer.id)}
-            disabled={isLoading}
-            className="rounded-md bg-gradient-pink-purple px-6 text-sm font-semibold  text-white shadow-[0_0_20px_rgba(255,108,240,0.35)] transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-             Buy
-          </Button>
+        
+        {/* Badges */}
+        <div className="flex gap-2 items-center">
+          {/* Diamonds badge */}
+          <div className="flex items-center justify-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-white text-[10px] text-center tracking-[0.16px]">
+            <span className="font-bold leading-normal">{offer.diamonds}</span>
+            <span className="font-normal leading-normal">diamonds</span>
+          </div>
+          
+          {/* Energy badge */}
+          <div className="flex items-center justify-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-white text-[10px] text-center tracking-[0.16px]">
+            <span className="font-bold leading-normal">{offer.energy}</span>
+            <span className="font-normal leading-normal">energy</span>
+          </div>
         </div>
+      </div>
+
+      {/* Right section - Price */}
+      <div className="flex items-center self-stretch shrink-0">
+        <p className="bg-gradient-to-r from-purple via-pink to-purple bg-clip-text text-transparent text-xl font-bold uppercase tracking-[0.4px] whitespace-nowrap">
+          {formatPrice(offer.price_in_usd)}
+        </p>
       </div>
     </Card>
   );
@@ -66,21 +98,22 @@ export function OfferCard({ offer, onPurchase, isLoading }: OfferCardProps) {
 
 export function OfferCardSkeleton() {
   return (
-    <Card className="relative overflow-hidden rounded-md border border-primary/40 bg-muted p-4 animate-pulse">
-      <div className="relative flex items-center gap-3">
-        <div className="h-16 w-16 shrink-0 rounded-2xl bg-muted-foreground/20" />
-        <div className="flex flex-1 flex-col gap-2 min-w-0">
-          <div className="h-6 w-3/4 bg-muted-foreground/20 rounded" />
-          <div className="w-full h-px bg-white/15" />
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="h-5 w-16 bg-muted-foreground/20 rounded-full" />
-            <div className="h-5 w-16 bg-muted-foreground/20 rounded-full" />
-          </div>
+    <Card className="relative overflow-hidden rounded-[12px] border border-purple bg-card-dark p-4 flex gap-5 items-start animate-pulse">
+      <div className="border border-purple rounded-lg bg-card-dark size-[70px] shrink-0">
+        <div className="h-12 w-[65px] bg-muted-foreground/20 rounded" />
+      </div>
+      <div className="flex flex-col gap-3 items-start justify-center flex-1 min-w-0">
+        <div className="flex flex-col items-start pb-px pt-0 px-0 w-full">
+          <div className="h-6 w-24 bg-muted-foreground/20 rounded" />
+          <div className="h-px w-full bg-muted-foreground/20 mt-1" />
         </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
-          <div className="h-6 w-16 bg-muted-foreground/20 rounded" />
-          <div className="h-9 w-20 bg-muted-foreground/20 rounded-md" />
+        <div className="flex gap-2">
+          <div className="h-6 w-24 bg-muted-foreground/20 rounded-lg" />
+          <div className="h-6 w-24 bg-muted-foreground/20 rounded-lg" />
         </div>
+      </div>
+      <div className="flex items-center self-stretch shrink-0">
+        <div className="h-6 w-16 bg-muted-foreground/20 rounded" />
       </div>
     </Card>
   );

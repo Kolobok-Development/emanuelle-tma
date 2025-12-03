@@ -93,6 +93,9 @@ export async function POST(request: NextRequest) {
         telegram_id: Number(user.telegram_id), // Convert BigInt to Number for JSON serialization
         username: user.username,
         settings: user.settings,
+        diamonds: user.diamonds,
+        energy: user.energy,
+        gender: user.gender,
       },
     });
 

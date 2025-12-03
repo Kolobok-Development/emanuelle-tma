@@ -35,14 +35,15 @@ export async function POST(request: NextRequest) {
     }
 
     const update = await request.json();
-    console.log('📦 Received update:', JSON.stringify(update, null, 2));
+    console.log('📦 ________Received update:______', JSON.stringify(update, null, 2));
+
 
     // Step 1: Approve the payment
     if (update.pre_checkout_query) {
       console.log('💳 Processing pre_checkout_query...');
       const { id: queryId, invoice_payload, total_amount, currency } = update.pre_checkout_query;
       console.log(`   Query ID: ${queryId}`);
-      console.log(`   Invoice Payload (offerId): ${invoice_payload}`);
+      console.log(`   Invoice Payload (reqyest_id): ${invoice_payload}`);
       console.log(`   Total Amount: ${total_amount}`);
       console.log(`   Currency: ${currency}`);
 
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
       console.log(`🔍 Looking up transaction for offerId: ${invoice_payload}`);
       const transaction = await prisma.paymentTransactions.findFirst({
         where: {
-          offer_id: invoice_payload,
+          payload: { contains: invoice_payload },
           status: PaymentStatus.PENDING,
         },
         include: { offer: true },
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
       console.log('💰 Processing successful payment...');
       const payment = update.message.successful_payment;
       const userId = update.message.from.id;
-      const offerId = payment.invoice_payload; // This is the offerId
+      const offerId = payment.invoice_payload; // This is the request_id
       
       console.log(`   User ID: ${userId}`);
       console.log(`   Offer ID (invoice_payload): ${offerId}`);
@@ -139,7 +140,7 @@ export async function POST(request: NextRequest) {
       console.log(`🔍 Looking up transaction for offerId: ${offerId}`);
       const transaction = await prisma.paymentTransactions.findFirst({
         where: {
-          offer_id: offerId,
+          payload: { contains: offerId },
           status: PaymentStatus.PENDING,
         },
         include: { offer: true },
@@ -174,7 +175,11 @@ export async function POST(request: NextRequest) {
 
       // Get user
       console.log(`🔍 Looking up user for telegram_id: ${userId}`);
-      const user = await UserService.getUserByTelegramId(BigInt(userId));
+
+      const user = await prisma.users.findUnique({
+          where: { telegram_id: BigInt(userId) },
+      })
+
       if (!user) {
         console.error(`❌ User not found for telegram_id: ${userId}`);
         return NextResponse.json({ ok: true });
