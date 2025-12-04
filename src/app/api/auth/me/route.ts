@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
               id: session.user.id,
               telegram_id: Number(session.user.telegram_id),
               username: session.user.username,
-              settings: session.user.settings
+              settings: session.user.settings,
+              diamonds: session.user.diamonds,
+              energy: session.user.energy,
+              gender: session.user.gender,
             },
             session: {
               expires_at: session.expires_at

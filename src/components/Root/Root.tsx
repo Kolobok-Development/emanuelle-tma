@@ -6,7 +6,7 @@ import {
   miniApp,
   useLaunchParams,
   useSignal,
-} from "@telegram-apps/sdk-react";
+} from "@tma.js/sdk-react";
 import { TonConnectUIProvider } from "@tonconnect/ui-react";
 import { AppRoot } from "@telegram-apps/telegram-ui";
 
@@ -17,6 +17,7 @@ import { setLocale } from "@/core/i18n/locale";
 
 import "./styles.css";
 import { AppProvider } from "@/context/AppContext";
+import { Toaster } from "react-hot-toast";
 
 function RootInner({ children }: PropsWithChildren) {
   const lp = useLaunchParams();
@@ -26,14 +27,12 @@ function RootInner({ children }: PropsWithChildren) {
 
   // Set the user locale.
   useEffect(() => {
-    initDataUser && setLocale(initDataUser.language_code);
+    if (initDataUser?.language_code) {
+      setLocale(initDataUser.language_code);
+    }
   }, [initDataUser]);
 
 
-  useEffect(() => {
-    console.log('initData')
-    console.log(initDataUser)
-  }, [initDataUser]);
 
   return (
     <TonConnectUIProvider manifestUrl="/tonconnect-manifest.json">

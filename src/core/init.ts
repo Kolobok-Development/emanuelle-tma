@@ -1,18 +1,31 @@
-import {
+// import {
+//   setDebug,
+//   mountBackButton,
+//   restoreInitData,
+//   init as initSDK,
+//   mountMiniAppSync,
+//   bindThemeParamsCssVars,
+//   mountViewport,
+//   bindViewportCssVars,
+//   mockTelegramEnv,
+//   type ThemeParams,
+//   themeParamsState,
+//   retrieveLaunchParams,
+//   emitEvent,
+// } from '@telegram-apps/sdk-react';
+
+
+import { init as initSDK,
   setDebug,
-  mountBackButton,
-  restoreInitData,
-  init as initSDK,
-  mountMiniAppSync,
-  bindThemeParamsCssVars,
-  mountViewport,
-  bindViewportCssVars,
   mockTelegramEnv,
-  type ThemeParams,
-  themeParamsState,
   retrieveLaunchParams,
   emitEvent,
-} from '@telegram-apps/sdk-react';
+  backButton,
+  miniApp,
+  viewport,
+  themeParams,
+
+  } from '@tma.js/sdk-react';
 
 /**
  * Initializes the application and configures its dependencies.
@@ -36,47 +49,55 @@ export async function init(options: {
   // Telegram for macOS has a ton of bugs, including cases, when the client doesn't
   // even response to the "web_app_request_theme" method. It also generates an incorrect
   // event for the "web_app_request_safe_area" method.
-  if (options.mockForMacOS) {
-    let firstThemeSent = false;
-    mockTelegramEnv({
-      onEvent(event, next) {
-        if (event[0] === 'web_app_request_theme') {
-          let tp: ThemeParams = {};
-          if (firstThemeSent) {
-            tp = themeParamsState();
-          } else {
-            firstThemeSent = true;
-            tp ||= retrieveLaunchParams().tgWebAppThemeParams;
+    if (options.mockForMacOS) {
+      const noInsets = {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 0,
+      } as const;
+
+      mockTelegramEnv({
+        onEvent(event) {
+          // Telegram for macOS: emulate theme & safe area replies.
+
+          if (event.name === 'web_app_request_theme') {
+            // Use theme from launch params as a source of truth.
+            const lp = retrieveLaunchParams();
+            const themeParams = lp.tgWebAppThemeParams ?? {};
+
+            return emitEvent('theme_changed', {
+              theme_params: themeParams,
+            });
           }
-          return emitEvent('theme_changed', { theme_params: tp });
-        }
 
-        if (event[0] === 'web_app_request_safe_area') {
-          return emitEvent('safe_area_changed', {
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
-          });
-        }
+          if (event.name === 'web_app_request_safe_area') {
+            return emitEvent('safe_area_changed', noInsets);
+          }
 
-        next();
-      },
-    });
-  }
+          // For all other events do nothing – they’ll be handled as usual.
+        },
+      });
+    }
 
   // Mount all components used in the project.
-  mountBackButton.ifAvailable();
-  restoreInitData();
+  backButton.mount();
+  themeParams.mount();
+  miniApp.mount();
 
-  if (mountMiniAppSync.isAvailable()) {
-    mountMiniAppSync();
-    bindThemeParamsCssVars();
+
+  if (themeParams.bindCssVars.isAvailable()) {
+    themeParams.bindCssVars();
   }
 
-  if (mountViewport.isAvailable()) {
-    mountViewport().then(() => {
-      bindViewportCssVars();
-    });
+  if (miniApp.bindCssVars.isAvailable()) {
+    miniApp.bindCssVars();
   }
+
+  if (viewport.bindCssVars.isAvailable()) {
+    viewport.bindCssVars();
+    viewport.safeAreaInsetTop();
+    viewport.safeAreaInsets();
+  }
+
 }

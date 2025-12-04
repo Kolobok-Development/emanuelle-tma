@@ -563,13 +563,13 @@ const initialOffers = [
 - [*] Create `/api/payments/webhook` route
 - [*] Add webhook signature verification
 - [ ] Add transaction logging
-- [ ] Add error handling
+- [*] Add error handling
 
 ### Frontend
-- [ ] Create `useTelegramPayment` hook
-- [ ] Update Balance page to fetch offers from API
-- [ ] Replace hardcoded offers with API data
-- [ ] Group offers by type for tabs (COMBO, ENERGY, DIAMOND)
+- [*] Create `useTelegramPayment` hook
+- [*] Update Balance page to fetch offers from API
+- [*] Replace hardcoded offers with API data
+- [*] Group offers by type for tabs (COMBO, ENERGY, DIAMOND)
 - [ ] Add payment handlers to "Buy" buttons
 - [ ] Add loading states
 - [ ] Add success/error notifications

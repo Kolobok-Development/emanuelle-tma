@@ -38,9 +38,9 @@ export default function Home() {
     router.push('/dashboard');
   }
 
-  // if (!isAuthenticated && !isLoading) {
-  //   router.push('/unauthorized');
-  // }
+// if (!isAuthenticated && !isLoading) {
+//   router.push('/unauthorized');
+// }
 
   // Fallback: Show loading while redirecting or if in unexpected state
   return (
