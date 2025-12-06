@@ -1,6 +1,136 @@
 {
-  "i18n": {
-    "header": "Application supports i18n",
-    "footer": "You can select a different language from the dropdown menu."
+  "common": {
+    "hello": "Hello",
+    "player": "Player",
+    "energy": "energy",
+    "diamonds": "diamonds",
+    "loading": "Loading...",
+    "save": "Save",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "tryAgain": "Try again"
+  },
+  "home": {
+    "preparingSession": "Preparing your session...",
+    "almostThere": "Almost there baby"
+  },
+  "dashboard": {
+    "noImage": "No image"
+  },
+  "companion": {
+    "title": "Companion",
+    "description": "Description",
+    "loadingDescription": "Loading description…",
+    "noDescription": "No description available.",
+    "goToChat": "Go to the chat"
+  },
+  "profile": {
+    "promocode": {
+      "title": "Promocode",
+      "description": "Enter a promocode to receive rewards",
+      "placeholder": "Enter promocode",
+      "applying": "Applying...",
+      "apply": "Apply"
+    },
+    "username": {
+      "title": "Conversation Name",
+      "description": "This is the name you want the AI to call you during conversations",
+      "placeholder": "Enter your name",
+      "saving": "Saving...",
+      "save": "Save"
+    },
+    "language": {
+      "title": "Language",
+      "description": "Select your preferred language for the app",
+      "placeholder": "Select language"
+    }
+  },
+  "balance": {
+    "title": "Balance",
+    "tabs": {
+      "energy": "Energy",
+      "combo": "!Combo!",
+      "diamonds": "Diamonds"
+    },
+    "noEnergyOffers": "No energy offers available",
+    "noComboOffers": "No combo offers available",
+    "noDiamondOffers": "No diamond offers available",
+    "loadError": "Failed to load offers. Please try again."
+  },
+  "shop": {
+    "title": "Shop",
+    "underDevelopment": "The shop section is currently under development. Please check back soon for new offers."
+  },
+  "tasks": {
+    "title": "Tasks",
+    "underDevelopment": "The tasks section is currently under development. Stay tuned for upcoming challenges."
+  },
+  "header": {
+    "home": {
+      "title": "Hello Player",
+      "subtitle": "I missed you!"
+    },
+    "shop": {
+      "title": "Store",
+      "subtitle": "Buy items to improve your experience"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "subtitle": "Complete tasks to receive rewards"
+    },
+    "profile": {
+      "title": "Profile",
+      "subtitle": "Manage your profile and settings"
+    }
+  },
+  "errors": {
+    "sessionExpired": {
+      "title": "Session Expired",
+      "message": "Your session has expired. Please refresh to continue.",
+      "refreshing": "Refreshing...",
+      "refreshButton": "Refresh Session"
+    },
+    "paymentError": {
+      "title": "Payment Error"
+    },
+    "unhandledError": {
+      "title": "An unhandled error occurred!",
+      "tryAgain": "Try again"
+    }
+  },
+  "payment": {
+    "processing": "Processing payment..",
+    "success": "Payment successful! Enjoy your purchase!",
+    "failed": "Payment failed. Please try again!",
+    "cancelled": "Payment cancelled. No worries, try again when ready!",
+    "pending": "Payment is being processed...",
+    "unknownError": "Something went wrong. Please contact support!",
+    "generalError": "💥 Oops! Something went wrong. Please try again!"
+  },
+  "toasts": {
+    "promocode": {
+      "enterPromocode": "Please enter a promocode",
+      "applyFailed": "Failed to apply promocode",
+      "applySuccess": "Promocode applied successfully!"
+    },
+    "username": {
+      "enterUsername": "Please enter a username",
+      "saveFailed": "Failed to save username",
+      "saveSuccess": "Username saved successfully!"
+    },
+    "language": {
+      "updateFailed": "Failed to update language",
+      "updateSuccess": "Language updated successfully!"
+    }
+  },
+  "api": {
+    "errors": {
+      "invalidPromocode": "Invalid promocode",
+      "inactivePromocode": "This promocode is no longer active",
+      "expiredPromocode": "This promocode has expired",
+      "alreadyUsedPromocode": "You have already used this promocode",
+      "usageLimitReached": "This promocode has reached its usage limit",
+      "internalServerError": "Internal server error"
+    }
   }
 }

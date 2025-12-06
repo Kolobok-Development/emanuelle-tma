@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 type Offer = {
   id: string;
@@ -21,6 +24,7 @@ function formatPrice(price: number): string {
 }
 
 export function DiamondOfferCard({ offer, onPurchase, isLoading }: DiamondOfferCardProps) {
+  const t = useTranslations();
   return (
     <Card 
       className="overflow-hidden rounded-[12px] border border-pink-border bg-card-dark cursor-pointer transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -50,7 +54,7 @@ export function DiamondOfferCard({ offer, onPurchase, isLoading }: DiamondOfferC
             {offer.diamonds}
           </span>
           <span className="text-[10px] font-normal leading-none tracking-[0.2px] mb-[-4px]">
-            diamonds
+            {t('common.diamonds')}
           </span>
         </div>
       </CardContent>

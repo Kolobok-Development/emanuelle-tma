@@ -10,6 +10,7 @@ import { OfferCard, OfferCardSkeleton } from '@/components/OfferCard/OfferCard';
 import { EnergyOfferCard, EnergyOfferCardSkeleton } from '@/components/EnergyOfferCard/EnergyOfferCard';
 import { DiamondOfferCard, DiamondOfferCardSkeleton } from '@/components/DiamondOfferCard/DiamondOfferCard';
 import { useAppContext } from '@/context/AppContext';
+import { useTranslations } from 'next-intl';
 
 type Offer = {
   id: string;
@@ -30,6 +31,7 @@ type OffersResponse = {
 };
 
 export default function BalancePage() {
+  const t = useTranslations();
   const { data, isLoading, error, mutate } = useSWR<OffersResponse>('/api/offers', fetcher);
   const { purchaseOffer, status, error: paymentError } = useTelegramPayment();
   const { refetchUserUntilUpdated } = useAppContext();
@@ -76,7 +78,7 @@ export default function BalancePage() {
   if (error || (!isLoading && !data?.success)) {
     return (
       <div className="relative flex flex-1 flex-col items-center justify-center px-4 mt-10">
-        <p className="text-sm text-red-400">Failed to load offers. Please try again.</p>
+        <p className="text-sm text-red-400">{t('balance.loadError')}</p>
       </div>
     );
   }
@@ -93,19 +95,19 @@ export default function BalancePage() {
             className="rounded-md px-4 py-2 text-base font-semibold text-white/70 transition-colors data-[state=active]:bg-gradient-pink-purple data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(255,108,240,0.55)]"
             value="energy"
           >
-            Energy
+            {t('balance.tabs.energy')}
           </TabsTrigger>
           <TabsTrigger
             className="rounded-md px-4 py-2 text-base font-semibold text-white/70 transition-colors data-[state=active]:bg-gradient-pink-purple data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(255,108,240,0.55)]"
             value="combo"
           >
-            !Combo!
+            {t('balance.tabs.combo')}
           </TabsTrigger>
           <TabsTrigger
             className="rounded-md px-4 py-2 text-base font-semibold text-white/70 transition-colors data-[state=active]:bg-gradient-pink-purple data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(255,108,240,0.55)]"
             value="diamonds"
           >
-            Diamonds
+            {t('balance.tabs.diamonds')}
           </TabsTrigger>
         </TabsList>
 
@@ -120,7 +122,7 @@ export default function BalancePage() {
                 <EnergyOfferCard key={offer.id} offer={offer} onPurchase={handlePurchase} isLoading={status === 'loading'} />
               ))
             ) : (
-              <p className="col-span-2 text-center text-sm text-white/70">No energy offers available</p>
+              <p className="col-span-2 text-center text-sm text-white/70">{t('balance.noEnergyOffers')}</p>
             )}
           </section>
         </TabsContent>
@@ -136,7 +138,7 @@ export default function BalancePage() {
                 <OfferCard key={offer.id} offer={offer} onPurchase={handlePurchase} isLoading={status === 'loading'} />
               ))
             ) : (
-              <p className="text-center text-sm text-white/70">No combo offers available</p>
+              <p className="text-center text-sm text-white/70">{t('balance.noComboOffers')}</p>
             )}
           </section>
         </TabsContent>
@@ -152,7 +154,7 @@ export default function BalancePage() {
                 <DiamondOfferCard key={offer.id} offer={offer} onPurchase={handlePurchase} isLoading={status === 'loading'} />
               ))
             ) : (
-              <p className="col-span-2 text-center text-sm text-white/70">No diamond offers available</p>
+              <p className="col-span-2 text-center text-sm text-white/70">{t('balance.noDiamondOffers')}</p>
             )}
           </section>
         </TabsContent>

@@ -75,9 +75,9 @@ const config: Config = {
       },
 
       fontFamily: {
-        // Space Mono as the main font
-        sans: ["var(--font-space-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
-        mono: ["var(--font-space-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+        // Space Mono as the main font with Cyrillic fallbacks
+        sans: ["var(--font-space-mono)", "'Courier New'", "Consolas", "Menlo", "ui-monospace", "SFMono-Regular", "monospace"],
+        mono: ["var(--font-space-mono)", "'Courier New'", "Consolas", "Menlo", "ui-monospace", "SFMono-Regular", "monospace"],
         serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"],
       },
 

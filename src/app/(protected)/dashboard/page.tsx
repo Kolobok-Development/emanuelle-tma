@@ -13,6 +13,7 @@ import useSWR from "swr";
 
 // Companion Card Component
 function CompanionCard({ companion, onClick }: { companion: AICompanion; onClick: () => void }) {
+    const t = useTranslations();
     const [imageError, setImageError] = useState(false);
 
     return (
@@ -32,7 +33,7 @@ function CompanionCard({ companion, onClick }: { companion: AICompanion; onClick
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground">
-                        <span className="text-sm">No image</span>
+                        <span className="text-sm">{t('dashboard.noImage')}</span>
                     </div>
                 )}
             </div>
@@ -60,7 +61,6 @@ function SkeletonCard() {
 }
 
 export default function Dashboard() {
-    const t = useTranslations('i18n');
     const { user } = useAppContext();
     const router = useRouter();
 

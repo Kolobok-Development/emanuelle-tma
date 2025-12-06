@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { EmptyMedia } from '@/components/ui/empty';
 
 export default function Home() {
-  const t = useTranslations('i18n');
+  const t = useTranslations();
   const { user, isAuthenticated, isLoading } = useAppContext();
   const router = useRouter();
 
@@ -26,7 +26,7 @@ export default function Home() {
         
         <div className="space-y-2">
           <p className="text-md font-bold text-foreground">
-            Preparing your session...
+            {t('home.preparingSession')}
           </p>
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function Home() {
       </EmptyMedia>
       <div className="space-y-2">
           <p className="text-md font-bold text-foreground">
-             Almost there baby
+             {t('home.almostThere')}
           </p>
         </div>
     </div>

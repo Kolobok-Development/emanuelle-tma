@@ -7,7 +7,7 @@ import { useAppContext } from '@/context/AppContext';
 import { useState } from 'react';
 
 export default function Unauthorized() {
-  const t = useTranslations('i18n');
+  const t = useTranslations();
   const router = useRouter();
   const { authenticateUser } = useAppContext();
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export default function Unauthorized() {
             weight="3"
             className="mb-4 text-white"
           >
-            Session Expired
+            {t('errors.sessionExpired.title')}
           </Title>
           
           <Subheadline
@@ -42,7 +42,7 @@ export default function Unauthorized() {
             weight="2"
             className="mb-8 text-gray-300"
           >
-            Your session has expired. Please refresh to continue.
+            {t('errors.sessionExpired.message')}
           </Subheadline>
         </div>
 
@@ -59,10 +59,10 @@ export default function Unauthorized() {
             {isLoading ? (
               <div className="flex items-center justify-center">
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                Refreshing...
+                {t('errors.sessionExpired.refreshing')}
               </div>
             ) : (
-              'Refresh Session'
+              t('errors.sessionExpired.refreshButton')
             )}
           </button>
         </div>

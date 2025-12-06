@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
 import { useAppContext } from '@/context/AppContext';
+import { useTranslations } from 'next-intl';
 
 function BalanceSkeleton() {
   return (
@@ -31,6 +32,7 @@ function BalanceSkeleton() {
 }
 
 export function BalanceHeader() {
+  const t = useTranslations();
   const { user, isBalanceRefetching } = useAppContext();
   return (
     <div 
@@ -43,7 +45,7 @@ export function BalanceHeader() {
         
         <div className="relative flex flex-col items-center ">
           <h1 className="text-3xl font-semibold uppercase tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-r from-[#ffc8ff] via-[#e47cfd] to-[#9c6eff]">
-            Balance
+            {t('balance.title')}
           </h1>
 
           <div className="relative flex w-full items-center justify-between gap-6 overflow-hidden rounded-2xl border border-white/15 p-2">

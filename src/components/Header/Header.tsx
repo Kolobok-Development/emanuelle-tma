@@ -6,8 +6,10 @@ import Image from 'next/image';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { useAppContext } from '@/context/AppContext';
+import { useTranslations } from 'next-intl';
 
 export const Header = () => {
+  const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
   const { user, isBalanceRefetching } = useAppContext();
@@ -16,28 +18,28 @@ export const Header = () => {
     switch (pathname) {
       case '/':
         return {
-          title: 'Привет Игрок',
-          subtitle: 'Я соскучилась по тебе!'
+          title: t('header.home.title'),
+          subtitle: t('header.home.subtitle')
         };
       case '/shop':
         return {
-          title: 'Магазин',
-          subtitle: 'Покупайте предметы для улучшения опыта'
+          title: t('header.shop.title'),
+          subtitle: t('header.shop.subtitle')
         };
       case '/tasks':
         return {
-          title: 'Задания',
-          subtitle: 'Выполняйте задания для получения наград'
+          title: t('header.tasks.title'),
+          subtitle: t('header.tasks.subtitle')
         };
       case '/profile':
         return {
-          title: 'Профиль',
-          subtitle: 'Управляйте своим профилем и настройками'
+          title: t('header.profile.title'),
+          subtitle: t('header.profile.subtitle')
         };
       default:
         return {
-          title: 'Привет Игрок',
-          subtitle: 'Я соскучилась по тебе!'
+          title: t('header.home.title'),
+          subtitle: t('header.home.subtitle')
         };
     }
   };
@@ -52,8 +54,8 @@ export const Header = () => {
       }}
     > 
       <div className='flex flex-col'>
-        <p className='text-sm'>Hello</p>
-        <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>{user?.username ?? 'Player'}</h3>
+        <p className='text-sm'>{t('common.hello')}</p>
+        <h3 className='text-lg text-transparent bg-clip-text bg-gradient-to-r from-secondary from-0% via-[#DB7AE6] via-50% to-primary to-100%'>{user?.username ?? t('common.player')}</h3>
       </div>
       <div className='relative flex items-center gap-4 bg-border p-2 pr-6 rounded-md'>
         <div className='flex items-center gap-2'>

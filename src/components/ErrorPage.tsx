@@ -1,4 +1,7 @@
+'use client';
+
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 export function ErrorPage({
   error,
@@ -7,6 +10,8 @@ export function ErrorPage({
   error: Error & { digest?: string }
   reset?: () => void
 }) {
+  const t = useTranslations();
+  
   useEffect(() => {
     // Log the error to an error reporting service
     console.error(error);
@@ -14,13 +19,13 @@ export function ErrorPage({
 
   return (
     <div>
-      <h2>An unhandled error occurred!</h2>
+      <h2>{t('errors.unhandledError.title')}</h2>
       <blockquote>
         <code>
           {error.message}
         </code>
       </blockquote>
-      {reset && <button onClick={() => reset()}>Try again</button>}
+      {reset && <button onClick={() => reset()}>{t('errors.unhandledError.tryAgain')}</button>}
     </div>
   );
 }

@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
         "/api/offers": "*", // Protected - requires JWT to get offers
         "/api/payment/create-invoice": "*", // Protected - requires JWT to create payments
         "/api/payment/webhook": true, // Public - used for webhook
+        "/api/profile/*": "*", // Protected - requires JWT to update profile
       
         // Page Routes - these require authentication
         "/": true,

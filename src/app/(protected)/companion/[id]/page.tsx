@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
+import { useTranslations } from 'next-intl';
 
 import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,6 +26,7 @@ type GetAllResponse = {
 };
 
 export default function CompanionPage() {
+  const t = useTranslations();
   const params = useParams<{ id: string }>();
   const companionId = params.id;
 
@@ -70,7 +72,7 @@ export default function CompanionPage() {
         <div className="bg-primary rounded-2xl shadow-[0_0_40px_0_color-mix(in_oklch,var(--primary)_60%,transparent)]">
           <div className="px-6 py-4 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-[0.25em] uppercase text-white">
-              {companion?.name || (isLoading ? '...' : 'Companion')}
+              {companion?.name || (isLoading ? '...' : t('companion.title'))}
             </h1>
           </div>
         </div>
@@ -114,18 +116,18 @@ export default function CompanionPage() {
       {/* Description panel */}
       <Card className="mt-6 bg-muted/80 backdrop-blur-md">
         <div className="px-5 pt-5">
-          <div className="text-xl font-bold mb-3">Description</div>
+          <div className="text-xl font-bold mb-3">{t('companion.description')}</div>
           <div className="h-px w-full bg-border mb-4" />
         </div>
         <CardContent className="pt-0 px-5 pb-6">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            {companion?.description || (isLoading ? 'Loading description…' : 'No description available.')}
+            {companion?.description || (isLoading ? t('companion.loadingDescription') : t('companion.noDescription'))}
           </p>
         </CardContent>
       </Card>
        <div className="absolute left-1/2 transform -translate-x-1/2 -mt-5">
              <Button disabled={isChatInitiated} className="bg-gradient-pink-purple text-white font-bold px-6 py-6 h-12 rounded-xl max-w-md" onClick={goToChat}>
-               Go to the chat
+               {t('companion.goToChat')}
              </Button>
        </div>
     </div>
