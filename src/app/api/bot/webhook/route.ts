@@ -127,6 +127,22 @@ export async function POST(request: NextRequest) {
         console.error('Error saving user message:', error);
       }
       
+      const energyCost = selectedCompanion.energyCost || 5;
+      const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
+      
+      if (!hasEnoughEnergy) {
+        const currentEnergy = await UserService.getEnergyBalance(userId);
+        const insufficientBalanceMessage = 
+          `You don't have enough energy to generate a response.\n\n` +
+          `Required: ${energyCost} \n` +
+          `Your balance: ${currentEnergy} \n\n` +
+          `Please purchase more energy to continue chatting.`;
+        
+        await TelegramService.sendMessage(chat.id, insufficientBalanceMessage);
+        console.log(`Insufficient balance for user ${from.id}: has ${currentEnergy}, needs ${energyCost}`);
+        return NextResponse.json({ ok: true });
+      }
+      
       await queueAIResponse(
         chat.id,
         text,
@@ -135,8 +151,6 @@ export async function POST(request: NextRequest) {
         body.message.message_id,
         dbChatId
       );
-
-      console.log(`Queued message from ${from.username || from.first_name} to ${selectedCompanion.name}: ${text}`);
     }
 
     if (body.callback_query) {
