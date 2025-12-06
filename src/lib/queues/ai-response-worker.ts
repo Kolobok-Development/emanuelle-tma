@@ -90,7 +90,7 @@ const aiResponseWorker = new Worker(
         ]]
       };
 
-      await TelegramService.sendMessage(chatId, responseMessage, 'HTML', actionButton);
+      await TelegramService.sendMessage(chatId, responseMessage, 'HTML'/*, actionButton*/);
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       

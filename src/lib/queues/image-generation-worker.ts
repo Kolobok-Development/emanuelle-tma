@@ -7,14 +7,14 @@ import { ImageGenerationJobData, imageGenerationDLQ, imageGenerationQueue } from
 
 console.log('🚀 Starting Image Generation Queue Worker...');
 
-const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'MODELSLAB_KEY'];
+const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'XAI_API_KEY'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
   console.error('💡 Please create a .env file with the required variables:');
   console.error('   TELEGRAM_BOT_KEY=your_telegram_bot_token');
-  console.error('   MODELSLAB_KEY=your_modelslab_api_key');
+  console.error('   XAI_API_KEY=your_xai_api_key');
   process.exit(1);
 }
 
@@ -42,40 +42,6 @@ const imageGenerationWorker = new Worker(
 
       if (imageResponse.status === 'error') {
         throw new Error(imageResponse.error || 'Image generation failed');
-      }
-
-      if (imageResponse.status === 'processing') {
-        console.log('Image generation is processing, ETA:', imageResponse.eta);
-        
-        // const processingMessage = `<b>${companionName}</b>\n\n🎨 Creating a beautiful image for you... This might take a moment!`;
-        // await TelegramService.sendMessage(chatId, processingMessage);
-        
-        if (imageResponse.fetch_result) {
-          console.log('Polling for image completion using fetch URL:', imageResponse.fetch_result);
-          
-          const polledResponse = await ImageGenerationService.pollForImageCompletion(
-            imageResponse.fetch_result
-          );
-          
-          if (polledResponse.status === 'success' && polledResponse.output && polledResponse.output.length > 0) {
-            const imageUrl = polledResponse.output[0];
-            
-            const caption = `<b>${companionName}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
-            
-            const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
-            
-            if (result && result.ok) {
-              console.log(`Image sent successfully for chat ${chatId} after polling`);
-              return { success: true, imageUrl };
-            } else {
-              throw new Error('Failed to send image to Telegram after polling');
-            }
-          } else {
-            throw new Error(`Image generation failed after polling: ${polledResponse.error || 'Unknown error'}`);
-          }
-        } else {
-          throw new Error('No fetch URL provided for polling');
-        }
       }
 
       if (imageResponse.status === 'success' && imageResponse.output && imageResponse.output.length > 0) {

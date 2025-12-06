@@ -21,7 +21,7 @@ This project is a Telegram bot application that provides AI companions for users
                                 ▼                        ▼
                        ┌─────────────────┐    ┌─────────────────┐
                        │   AI Service    │    │   Telegram      │
-                       │  (ModelsLab)    │    │   Service       │
+                       │  (Grok/xAI)     │    │   Service       │
                        └─────────────────┘    └─────────────────┘
 ```
 
@@ -105,11 +105,11 @@ npm run queue:worker
 
 ### 4. AI Service (`/src/lib/ai.ts`)
 
-**Purpose**: Integration with external AI API (ModelsLab)
+**Purpose**: Integration with external AI API (Grok/xAI)
 
 **Configuration**:
-- **API Endpoint**: `https://modelslab.com/api/v5/uncensored_chat`
-- **Model**: `mistralai-Mistral-7B-Instruct-v0.3`
+- **API Endpoint**: `https://api.x.ai/v1/chat/completions` (via @ai-sdk/xai)
+- **Model**: `grok-2`
 - **Max Tokens**: 1000
 - **Timeout**: 30 seconds
 
@@ -266,7 +266,7 @@ Mark job complete → Cleanup
 - `DATABASE_URL`: PostgreSQL connection string
 - `DIRECT_URL`: Direct PostgreSQL connection (for migrations)
 - `TELEGRAM_BOT_KEY`: Telegram bot token
-- `MODELSLAB_KEY`: AI service API key
+- `XAI_API_KEY`: xAI (Grok) API key for AI chat and image generation
 
 ### Optional
 - `REDIS_HOST`: Redis server host (default: localhost)
@@ -301,7 +301,7 @@ npm run seed:companions
 - **Queue Worker**: Separate process running BullMQ worker
 - **Database**: PostgreSQL with Prisma ORM
 - **Cache/Queue**: Redis for BullMQ
-- **External Services**: Telegram Bot API, ModelsLab AI API
+- **External Services**: Telegram Bot API, Grok/xAI API
 
 ## Security Considerations
 
@@ -356,7 +356,7 @@ npm run seed:companions
    - Check job queue status
 
 2. **AI Responses Not Generated**
-   - Verify ModelsLab API key
+   - Verify XAI_API_KEY
    - Check API rate limits
    - Review error logs
 
