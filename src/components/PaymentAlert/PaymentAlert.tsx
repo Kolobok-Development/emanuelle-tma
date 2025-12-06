@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import {
   Alert,
   AlertDescription,
@@ -15,6 +16,7 @@ interface PaymentAlertProps {
 }
 
 export function PaymentAlert({ error, onDismiss, autoCloseDelay = 1000000 }: PaymentAlertProps) {
+  const t = useTranslations();
   const [isVisible, setIsVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(false);
 
@@ -57,7 +59,7 @@ export function PaymentAlert({ error, onDismiss, autoCloseDelay = 1000000 }: Pay
     >
       <Alert variant="destructive">
         <AlertCircle />
-        <AlertTitle>Payment Error</AlertTitle>
+        <AlertTitle>{t('errors.paymentError.title')}</AlertTitle>
         <AlertDescription>
           {error}
         </AlertDescription>

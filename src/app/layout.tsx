@@ -11,7 +11,7 @@ import './_assets/globals.css';
 
 // Configure Space Mono font
 const spaceMono = Space_Mono({
-  subsets: ['latin'],
+  subsets: ['latin', 'latin-ext'],
   weight: ['400', '700'],
   variable: '--font-space-mono',
   display: 'swap',

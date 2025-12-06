@@ -15,11 +15,13 @@
     "cache:test": "tsx src/scripts/test-cache.ts",
     "seed:companions": "tsx src/scripts/seed-companions.ts",
     "seed:offers": "tsx src/scripts/seed-offers.ts",
+    "seed:promocodes": "tsx src/scripts/seed-promocodes.ts",
     "setup:env": "tsx src/scripts/setup-env.ts",
     "webhook:setup": "tsx src/scripts/setup-webhook.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
     "@tailwindcss/typography": "^0.5.19",
@@ -57,6 +59,7 @@
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
     "postcss": "^8.5.6",
+    "shadcn": "^3.5.1",
     "tailwindcss": "^3.4.0",
     "tsx": "^4.21.0",
     "typescript": "^5"

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { invoice } from '@tma.js/sdk';
 import type { InvoiceStatus } from '@tma.js/bridge';
+import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
 
 type PaymentStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -15,6 +16,7 @@ interface UseTelegramPaymentReturn {
  * Hook for handling Telegram Stars payments
  */
 export function useTelegramPayment(): UseTelegramPaymentReturn {
+  const t = useTranslations();
   const [status, setStatus] = useState<PaymentStatus>('idle');
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
 
     try {
       // Step 1: Show loading toast when creating invoice
-      toast.loading('Processing payment..', {
+      toast.loading(t('payment.processing'), {
         id: 'payment-loading',
         style: {
           background: 'oklch(0.28 0.025 305)',
@@ -78,7 +80,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
       switch (invoiceResult) {
         case 'paid':
           setStatus('success');
-          toast.success('Payment successful! Enjoy your purchase!', {
+          toast.success(t('payment.success'), {
             id: 'payment-success',
             style: {
               background: 'oklch(0.28 0.025 305)',
@@ -96,7 +98,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
         case 'failed':
           setStatus('error');
           setError('Payment failed');
-          toast.error('Payment failed. Please try again!', {
+          toast.error(t('payment.failed'), {
             id: 'payment-failed',
             style: {
               background: 'oklch(0.28 0.025 305)',
@@ -114,7 +116,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
         case 'cancelled':
           setStatus('error');
           setError('Payment was cancelled');
-          toast.error('Payment cancelled. No worries, try again when ready!', {
+          toast.error(t('payment.cancelled'), {
             id: 'payment-cancelled',
             style: {
               background: 'oklch(0.28 0.025 305)',
@@ -133,7 +135,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
           // Payment is still pending, keep loading state
           // Note: This might not occur as the promise typically resolves with final status
           setStatus('loading');
-          toast.loading('Payment is being processed...', {
+          toast.loading(t('payment.pending'), {
             id: 'payment-pending',
             style: {
               background: 'oklch(0.28 0.025 305)',
@@ -152,7 +154,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
           // Unknown status, treat as error
           setStatus('error');
           setError(`Unknown payment status: ${invoiceResult}`);
-          toast.error('Something went wrong. Please contact support!', {
+          toast.error(t('payment.unknownError'), {
             id: 'payment-unknown',
             style: {
               background: 'oklch(0.28 0.025 305)',
@@ -178,7 +180,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
       toast.dismiss('payment-loading');
       
       // Show error toast
-      toast.error('💥 Oops! Something went wrong. Please try again!', {
+      toast.error(t('payment.generalError'), {
         id: 'payment-error',
         style: {
           background: 'oklch(0.28 0.025 305)',
@@ -192,7 +194,7 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
         duration: 4000,
       });
     }
-  }, []);
+  }, [t]);
 
   return {
     purchaseOffer,

@@ -1,0 +1,137 @@
+{
+  "common": {
+    "hello": "Hola",
+    "player": "Jugador",
+    "energy": "energía",
+    "diamonds": "diamantes",
+    "loading": "Cargando...",
+    "save": "Guardar",
+    "apply": "Aplicar",
+    "cancel": "Cancelar",
+    "tryAgain": "Inténtalo de nuevo"
+  },
+  "home": {
+    "preparingSession": "Preparando tu sesión...",
+    "almostThere": "Ya casi estás"
+  },
+  "dashboard": {
+    "noImage": "Sin imagen"
+  },
+  "companion": {
+    "title": "Compañero",
+    "description": "Descripción",
+    "loadingDescription": "Cargando descripción...",
+    "noDescription": "No hay descripción disponible.",
+    "goToChat": "Ir al chat"
+  },
+  "profile": {
+    "promocode": {
+      "title": "Código promocional",
+      "description": "Introduce un código promocional para recibir recompensas",
+      "placeholder": "Introduce el código promocional",
+      "applying": "Aplicando...",
+      "apply": "Aplicar"
+    },
+    "username": {
+      "title": "Nombre de la conversación",
+      "description": "Este es el nombre con el que quieres que la IA se dirija a ti durante las conversaciones",
+      "placeholder": "Introduce tu nombre",
+      "saving": "Guardando...",
+      "save": "Guardar"
+    },
+    "language": {
+      "title": "Idioma",
+      "description": "Selecciona tu idioma preferido para la aplicación",
+      "placeholder": "Seleccionar idioma"
+    }
+  },
+  "balance": {
+    "title": "Saldo",
+    "tabs": {
+      "energy": "Energía",
+      "combo": "¡Combo!",
+      "diamonds": "Diamantes"
+    },
+    "noEnergyOffers": "No hay ofertas de energía disponibles",
+    "noComboOffers": "No hay ofertas de combos disponibles",
+    "noDiamondOffers": "No hay ofertas de diamantes disponibles",
+    "loadError": "No se han podido cargar las ofertas. Por favor, inténtalo de nuevo."
+  },
+  "shop": {
+    "title": "Tienda",
+    "underDevelopment": "La sección de la tienda está actualmente en desarrollo. Vuelve pronto para ver nuevas ofertas."
+  },
+  "tasks": {
+    "title": "Tareas",
+    "underDevelopment": "La sección de tareas está actualmente en desarrollo. Permanezca atento a los próximos desafíos."
+  },
+  "header": {
+    "home": {
+      "title": "Hola jugador",
+      "subtitle": "¡Te he echado de menos!"
+    },
+    "shop": {
+      "title": "Tienda",
+      "subtitle": "Compra artículos para mejorar la experiencia"
+    },
+    "tasks": {
+      "title": "Misiones",
+      "subtitle": "Completa las misiones para recibir premios"
+    },
+    "profile": {
+      "title": "Perfil",
+      "subtitle": "Administra tu perfil y configuración"
+    }
+  },
+  "errors": {
+    "sessionExpired": {
+      "title": "Sesión caducada",
+      "message": "Tu sesión ha caducado. Actualice para continuar.",
+      "refreshing": "Actualizando...",
+      "refreshButton": "Actualizar sesión"
+    },
+    "paymentError": {
+      "title": "Error de pago"
+    },
+    "unhandledError": {
+      "title": "¡Se ha producido un error no controlado!",
+      "tryAgain": "Inténtalo de nuevo"
+    }
+  },
+  "payment": {
+    "processing": "Procesando pago...",
+    "success": "¡Pago realizado correctamente! ¡Disfruta de tu compra!",
+    "failed": "Error en el pago. ¡Inténtalo de nuevo!",
+    "cancelled": "Pago cancelado. No te preocupes, ¡inténtalo de nuevo cuando estés listo!",
+    "pending": "El pago se está procesando...",
+    "unknownError": "Algo ha salido mal. ¡Ponte en contacto con el servicio de asistencia!",
+    "generalError": "💥 ¡Vaya! Se ha producido un error. ¡Inténtalo de nuevo!"
+  },
+  "toasts": {
+    "promocode": {
+      "enterPromocode": "Introduce un código promocional",
+      "applyFailed": "No se ha podido aplicar el código promocional",
+      "applySuccess": "¡Código promocional aplicado correctamente!"
+    },
+    "username": {
+      "enterUsername": "Introduce un nombre de usuario",
+      "saveFailed": "Error al guardar el nombre de usuario",
+      "saveSuccess": "¡Nombre de usuario guardado correctamente!"
+    },
+    "language": {
+      "updateFailed": "Error al actualizar el idioma",
+      "updateSuccess": "Idioma actualizado correctamente"
+    }
+  },
+  "api": {
+    "errors": {
+      "invalidPromocode": "Código promocional no válido",
+      "inactivePromocode": "Este código promocional ya no está activo",
+      "expiredPromocode": "Este código promocional ha caducado",
+      "alreadyUsedPromocode": "Ya ha utilizado este código promocional",
+      "usageLimitReached": "Este código promocional ha alcanzado su límite de uso",
+      "internalServerError": "Error interno del servidor"
+    }
+  }
+}
+

@@ -1,5 +1,8 @@
+'use client';
+
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 type Offer = {
   id: string;
@@ -23,6 +26,7 @@ function formatPrice(price: number): string {
 }
 
 export function OfferCard({ offer, onPurchase, isLoading }: OfferCardProps) {
+  const t = useTranslations();
   return (
     <Card 
       className="relative overflow-hidden rounded-[12px] border border-purple bg-card-dark p-4 flex gap-5 items-start cursor-pointer transition-transform duration-200 hover:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
@@ -75,13 +79,13 @@ export function OfferCard({ offer, onPurchase, isLoading }: OfferCardProps) {
           {/* Diamonds badge */}
           <div className="flex items-center justify-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-white text-[10px] text-center tracking-[0.16px]">
             <span className="font-bold leading-normal">{offer.diamonds}</span>
-            <span className="font-normal leading-normal">diamonds</span>
+            <span className="font-normal leading-normal">{t('common.diamonds')}</span>
           </div>
           
           {/* Energy badge */}
           <div className="flex items-center justify-center gap-1 rounded-lg bg-secondary px-3 py-1.5 text-white text-[10px] text-center tracking-[0.16px]">
             <span className="font-bold leading-normal">{offer.energy}</span>
-            <span className="font-normal leading-normal">energy</span>
+            <span className="font-normal leading-normal">{t('common.energy')}</span>
           </div>
         </div>
       </div>
