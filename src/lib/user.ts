@@ -100,5 +100,58 @@ export class UserService {
       throw error;
     }
   }
+
+  static async deductEnergy(userId: string, energyCost: number): Promise<boolean> {
+    try {
+      const result = await prisma.$transaction(async (tx) => {
+        const user = await tx.users.findUnique({
+          where: { id: userId },
+          select: { id: true, energy: true },
+        });
+
+        if (!user) {
+          throw new Error(`User not found: ${userId}`);
+        }
+
+        const currentEnergy = user.energy || 0;
+
+        if (currentEnergy < energyCost) {
+          return { success: false, newEnergy: currentEnergy };
+        }
+
+        const updatedUser = await tx.users.update({
+          where: { id: userId },
+          data: {
+            energy: { decrement: energyCost },
+          },
+          select: { energy: true },
+        });
+
+        return { success: true, newEnergy: updatedUser.energy || 0 };
+      });
+
+      if (result.success) {
+        await CacheService.invalidateUser(userId);
+      }
+
+      return result.success;
+    } catch (error) {
+      console.error('Error deducting energy:', error);
+      throw error;
+    }
+  }
+
+  static async getEnergyBalance(userId: string): Promise<number> {
+    try {
+      const user = await prisma.users.findUnique({
+        where: { id: userId },
+        select: { energy: true },
+      });
+      return user?.energy || 0;
+    } catch (error) {
+      console.error('Error getting energy balance:', error);
+      return 0;
+    }
+  }
 }
 
