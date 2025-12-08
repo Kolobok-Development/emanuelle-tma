@@ -29,7 +29,8 @@ function getNoEnergyMessage(languageCode?: string): string {
   } else {
     return 'You don\'t have enough energy to send a message. Please recharge your balance.';
   }
-} 
+}
+
 
 function validateWebhookAuth(request: NextRequest): boolean {
   const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN;
