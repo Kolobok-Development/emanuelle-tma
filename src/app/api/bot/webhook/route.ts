@@ -7,9 +7,29 @@ import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
 import { UserService } from '@/lib/user';
 import { redis } from '@/lib/redis';
+import { prisma } from '@/core/db/prisma';
 
 const MAX_PAYLOAD_SIZE = 1024 * 1024; 
-const IDEMPOTENCY_TTL = 24 * 60 * 60; 
+const IDEMPOTENCY_TTL = 24 * 60 * 60;
+const ENERGY_COST_PER_MESSAGE = 1;
+
+function getNoEnergyMessage(languageCode?: string): string {
+  const lang = languageCode?.toLowerCase() || 'en';
+  
+  if (lang.startsWith('ru')) {
+    return 'У вас недостаточно энергии для отправки сообщения. Пожалуйста, пополните баланс.';
+  } else if (lang.startsWith('ar')) {
+    return 'ليس لديك طاقة كافية لإرسال الرسالة. يرجى إعادة شحن رصيدك.';
+  } else if (lang.startsWith('fr')) {
+    return 'Vous n\'avez pas assez d\'énergie pour envoyer un message. Veuillez recharger votre solde.';
+  } else if (lang.startsWith('es')) {
+    return 'No tienes suficiente energía para enviar un mensaje. Por favor, recarga tu saldo.';
+  } else if (lang.startsWith('de')) {
+    return 'Sie haben nicht genug Energie, um eine Nachricht zu senden. Bitte laden Sie Ihr Guthaben auf.';
+  } else {
+    return 'You don\'t have enough energy to send a message. Please recharge your balance.';
+  }
+} 
 
 function validateWebhookAuth(request: NextRequest): boolean {
   const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET_TOKEN;
@@ -94,6 +114,15 @@ export async function POST(request: NextRequest) {
         BigInt(from.id),
         from.username || from.first_name || undefined
       );
+
+      const user = await UserService.getUserById(userId);
+      if (!user || (user.energy || 0) < ENERGY_COST_PER_MESSAGE) {
+        const languageCode = from.language_code;
+        const noEnergyMessage = getNoEnergyMessage(languageCode);
+        await TelegramService.sendMessage(chat.id, noEnergyMessage);
+        console.log(`User ${from.id} has insufficient energy (${user?.energy || 0}/${ENERGY_COST_PER_MESSAGE})`);
+        return NextResponse.json({ ok: true });
+      }
 
       let selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(from.id));
       

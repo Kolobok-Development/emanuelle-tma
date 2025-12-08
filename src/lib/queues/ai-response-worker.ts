@@ -5,6 +5,7 @@ import { AIService, AIMessage } from '../ai';
 import { TelegramService, InlineKeyboardMarkup } from '../telegram';
 import { ConversationService } from '../conversation';
 import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
+import { prisma } from '@/core/db/prisma';
 
 console.log('🚀 Starting AI Response Queue Worker...');
 
@@ -91,6 +92,27 @@ const aiResponseWorker = new Worker(
       };
 
       await TelegramService.sendMessage(chatId, responseMessage, 'HTML'/*, actionButton*/);
+      
+      if (dbChatId) {
+        try {
+          const chat = await prisma.chat.findUnique({
+            where: { id: dbChatId },
+            select: { user_id: true },
+          });
+          
+          if (chat) {
+            await prisma.users.update({
+              where: { id: chat.user_id },
+              data: {
+                energy: { decrement: 1 },
+              },
+            });
+            console.log(`Energy decremented for user ${chat.user_id}`);
+          }
+        } catch (energyError) {
+          console.error('Failed to decrement user energy:', energyError)
+        }
+      }
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       
