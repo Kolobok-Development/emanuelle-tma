@@ -23,6 +23,7 @@ model Users {
   sessions              Session[]
   settings              UserSettings?
   payment_transactions  PaymentTransactions[]
+  promocode_usages      PromocodeUsage[]
 }
 
 model UserSettings {
@@ -126,6 +127,38 @@ model PaymentTransactions {
   @@index([offer_id])
   @@index([status])
   @@index([user_id])
+}
+
+model Promocodes {
+  id          String           @id @default(uuid())
+  code        String           @unique
+  diamonds    Int              @default(0)
+  energy      Int              @default(0)
+  description String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  is_active   Boolean          @default(true)
+  expires_at  DateTime?
+  usage_limit Int? // null means unlimited
+  usages      PromocodeUsage[]
+
+  @@index([code])
+  @@index([is_active])
+}
+
+model PromocodeUsage {
+  id           String   @id @default(uuid())
+  promocode_id String
+  user_id      String
+  used_at      DateTime @default(now())
+
+  promocode Promocodes @relation(fields: [promocode_id], references: [id], onDelete: Cascade)
+  user      Users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([promocode_id, user_id]) // Prevent duplicate usage per user
+  @@index([promocode_id])
+  @@index([user_id])
+  @@index([used_at])
 }
 
 enum ChatRole {

@@ -15,18 +15,22 @@
     "cache:test": "tsx src/scripts/test-cache.ts",
     "seed:companions": "tsx src/scripts/seed-companions.ts",
     "seed:offers": "tsx src/scripts/seed-offers.ts",
+    "seed:promocodes": "tsx src/scripts/seed-promocodes.ts",
     "setup:env": "tsx src/scripts/setup-env.ts",
     "webhook:setup": "tsx src/scripts/setup-webhook.ts"
   },
   "dependencies": {
     "@ai-sdk/xai": "^2.0.33",
     "@prisma/client": "^6.16.2",
+    "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
     "@tailwindcss/typography": "^0.5.19",
     "@telegram-apps/sdk-react": "^3.2.4",
     "@telegram-apps/telegram-ui": "^2.1.5",
     "@tma.js/init-data-node": "^2.0.1",
+    "@tma.js/sdk": "^3.0.8",
+    "@tma.js/sdk-react": "^3.0.8",
     "@tonconnect/ui-react": "^2.1.0",
     "ai": "^5.0.93",
     "axios": "^1.12.2",
@@ -44,6 +48,7 @@
     "normalize.css": "^8.0.1",
     "react": "^18",
     "react-dom": "^18",
+    "react-hot-toast": "^2.6.0",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7"
@@ -53,11 +58,13 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.4.21",
+    "dotenv": "^17.2.3",
     "eslint": "^8",
     "eslint-config-next": "14.2.4",
     "postcss": "^8.5.6",
+    "shadcn": "^3.5.1",
     "tailwindcss": "^3.4.0",
-    "tsx": "^4.20.5",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

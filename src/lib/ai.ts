@@ -84,7 +84,24 @@ export class AIService {
         });
       });
 
-      console.log('AI response received:', result.text);
+      console.log('AI response received:', {
+        text: result.text,
+        textLength: result.text?.length || 0,
+        hasText: !!result.text,
+        finishReason: result.finishReason,
+        usage: result.usage
+      });
+
+      if (!result.text || result.text.trim().length === 0) {
+        console.error('AI returned empty or whitespace-only response', {
+          finishReason: result.finishReason,
+          usage: result.usage,
+          rawResult: JSON.stringify(result).substring(0, 500)
+        });
+        return {
+          error: `AI returned empty response. Finish reason: ${result.finishReason || 'unknown'}`,
+        };
+      }
 
       return {
         message: result.text,

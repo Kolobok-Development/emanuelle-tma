@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
 export async function middleware(request: NextRequest) {
-    console.log("Middleware---->");
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
 
 
@@ -19,17 +18,30 @@ export async function middleware(request: NextRequest) {
         pathname === "/sitemap.xml" ||
         /\.[a-z0-9]+$/i.test(pathname)                   // any /file.ext (png, webp, css, js, etc.)
       ) {
-        return NextResponse.next();
+        // Add CORS headers for _next static assets to allow ngrok
+        const response = NextResponse.next();
+        if (pathname.startsWith("/_next")) {
+          const origin = request.headers.get("origin");
+          if (origin && origin.includes("ngrok")) {
+            response.headers.set("Access-Control-Allow-Origin", origin);
+            response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+          }
+        }
+        return response;
       }
 
     const routeConfig: Record<string, "*" | true> = {
         
         //API Routes
         "/api/auth/authenticate-user": true, // Public - used for initial authentication
-        "/api/auth/me": "*", // Protected - requires JWT to get user data
+        "/api/auth/me": true, // Protected - requires JWT to get user data
         "/api/bot/webhook": true, // Public - used for webhook
         "/api/companion/*": "*", // Protected - requires JWT to access companion data
         "/api/offers": "*", // Protected - requires JWT to get offers
+        "/api/payment/create-invoice": "*", // Protected - requires JWT to create payments
+        "/api/payment/webhook": true, // Public - used for webhook
+        "/api/profile/*": "*", // Protected - requires JWT to update profile
       
         // Page Routes - these require authentication
         "/": true,
@@ -56,7 +68,6 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    console.log("Matched Config---->", matchedConfig);
 
     if (matchedConfig === null) {
         const url = request.nextUrl.clone();
@@ -69,9 +80,9 @@ export async function middleware(request: NextRequest) {
     }
 
     // For routes that require authentication (matchedConfig === "*")
-    console.log("Cookie Store---->");
     const cookie = request.cookies.get(COOKIE_NAME);;
 
+    console.log("Cookie---->", cookie);
     if (!cookie) {
         // Check if this is an API route
         if (pathname.startsWith('/api/')) {
@@ -87,10 +98,8 @@ export async function middleware(request: NextRequest) {
     const jwt = cookie.value;
 
     try {
-        console.log("JWT Verifying---->");
         const  { payload } = await jwtVerify(jwt, secret, {});
 
-        console.log("Payload---->", payload);
 
         if (!payload) {
             // Check if this is an API route
@@ -104,7 +113,6 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
-        console.log("JWT verified---->");
         return NextResponse.next(); 
 
     } catch(error) {

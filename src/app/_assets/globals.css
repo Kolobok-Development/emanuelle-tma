@@ -48,6 +48,15 @@
   --sidebar-accent-foreground: oklch(0.82 0.11 305);
   --sidebar-border: oklch(0.42 0.03 305);
   --sidebar-ring: oklch(0.62 0.26 300);
+
+  /* Design system palette colors */
+  --card-dark: #251f28;
+  --purple: #9c4dff;
+  --purple-border: rgba(156, 77, 255, 0.4);
+  --pink: #ff4fbf;
+  --pink-border: rgba(255, 79, 191, 0.4);
+  --white: #f5f0ff;
+  --muted-dark: #413847;
 }
 
 /* --- BASE: apply tokens --- */
@@ -61,7 +70,7 @@
     padding: 0;
     /* Using Tailwind's arbitrary value helper keeps JIT happy */
     @apply bg-[color:var(--background)] text-[color:var(--foreground)];
-    font-family: var(--font-space-mono, 'Space Mono', monospace);
+    font-family: var(--font-space-mono, 'Space Mono'), 'Courier New', 'Consolas', 'Menlo', monospace;
     line-height: 1.6;
     letter-spacing: 0.025em;
     position: relative;
@@ -112,7 +121,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     color: var(--foreground);
-    font-family: var(--font-space-mono, 'Space Mono', monospace);
+    font-family: var(--font-space-mono, 'Space Mono'), 'Courier New', 'Consolas', 'Menlo', monospace;
     font-weight: 700;
     line-height: 1.25;
   }

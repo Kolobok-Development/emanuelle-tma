@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let user = await prisma.users.findFirstOrThrow({
+    let user = await prisma.users.findFirst({
       where: { telegram_id: BigInt(telegramUser.id) }, // Changed from Number to BigInt
       include: { settings: true },
     });
@@ -93,6 +93,9 @@ export async function POST(request: NextRequest) {
         telegram_id: Number(user.telegram_id), // Convert BigInt to Number for JSON serialization
         username: user.username,
         settings: user.settings,
+        diamonds: user.diamonds,
+        energy: user.energy,
+        gender: user.gender,
       },
     });
 
