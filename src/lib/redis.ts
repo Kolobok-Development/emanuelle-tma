@@ -3,6 +3,7 @@ import IORedis from 'ioredis';
 export const redis = new IORedis({
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
+  username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -15,6 +16,7 @@ export const createRedisConnection = () => {
   return {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
+    username: process.env.REDIS_USERNAME,
     password: process.env.REDIS_PASSWORD,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
