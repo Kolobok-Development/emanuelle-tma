@@ -135,12 +135,12 @@ export async function GET() {
     timestamp: new Date().toISOString(),
   };
 
-  const isHealthy = Object.values(checks)
-    .filter((check): check is HealthCheckResult => 
-      typeof check === 'object' && 'status' in check
-    )
-    .every((check) => check.status === 'ok');
-
+  // Consider app healthy if database is OK (Redis, Telegram, AI are optional for basic functionality)
+  const criticalChecks = [checks.database];
+  const isHealthy = criticalChecks.every((check) => check.status === 'ok');
+  
+  // Return 200 if database is OK, even if other services have issues
+  // This prevents unnecessary restarts when Redis or external APIs are temporarily unavailable
   return NextResponse.json(checks, {
     status: isHealthy ? 200 : 503,
     headers: {
