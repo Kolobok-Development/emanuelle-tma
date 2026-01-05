@@ -1,9 +1,5 @@
 "use client";
 import type { Users, Session } from "@prisma/client";
-import {
-  useSignal,
-  initDataRaw as _initDataRaw,
-} from "@telegram-apps/sdk-react";
 import { useRawInitData } from "@tma.js/sdk-react";
 import { useContext, createContext, useState, useEffect, useRef } from "react";
 
@@ -36,7 +32,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     console.log('User:', user);
   }, [user]);
 
-  //const initDataRaw = useSignal(_initDataRaw);
   const isAuthenticated = !!user && !!session;
   const [sessionStatus, setSessionStatus] = useState<"valid" | "invalid">();
 

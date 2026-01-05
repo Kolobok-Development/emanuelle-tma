@@ -16,7 +16,7 @@ import {
   imageGenerationQueue,
 } from "./image-generation-queue";
 
-import { invoice } from "@telegram-apps/sdk";
+// invoice is not used in this file - removed unused import
 
 console.warn(
   "⚠️  DEPRECATED: Using combined worker. Consider using separate workers for better scalability."
