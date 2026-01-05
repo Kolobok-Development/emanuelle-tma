@@ -15,10 +15,10 @@ model Users {
   username              String?
   gender                String?
   isTermsPolicyAccepted Boolean               @default(false)
-  diamonds              Int                   @default(0)
-  energy                Int                   @default(0)
   created_at            DateTime              @default(now())
   updated_at            DateTime              @updatedAt
+  diamonds              Int                   @default(0)
+  energy                Int                   @default(0)
   chats                 Chat[]
   sessions              Session[]
   settings              UserSettings?
@@ -120,9 +120,8 @@ model PaymentTransactions {
   created_at    DateTime      @default(now())
   updated_at    DateTime      @updatedAt
   completed_at  DateTime?
-
-  user  Users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  offer Offers? @relation(fields: [offer_id], references: [id], onDelete: SetNull)
+  user          Users         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  offer         Offers?       @relation(fields: [offer_id], references: [id], onDelete: SetNull)
 
   @@index([invoice_id])
   @@index([offer_id])

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/core/db/prisma';
 import { redis } from '@/lib/redis';
-import { TelegramService } from '@/lib/telegram';
 import axios from 'axios';
 
 interface HealthCheckResult {
@@ -97,19 +96,19 @@ async function checkTelegram(): Promise<HealthCheckResult> {
 async function checkAIService(): Promise<HealthCheckResult> {
   const startTime = Date.now();
   try {
-    const apiKey = process.env.MODELSLAB_KEY;
+    const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
       return {
         status: 'error',
-        message: 'MODELSLAB_KEY not configured',
+        message: 'XAI_API_KEY not configured',
         responseTime: Date.now() - startTime,
       };
     }
 
-    await axios.get('https://modelslab.com/api/v5/models', {
+    await axios.get('https://api.x.ai/v1/models', {
       headers: {
         'Content-Type': 'application/json',
-        key: apiKey,
+        'Authorization': `Bearer ${apiKey}`,
       },
       timeout: 5000,
     });
@@ -151,4 +150,5 @@ export async function GET() {
     },
   });
 }
+
 

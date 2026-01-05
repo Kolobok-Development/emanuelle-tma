@@ -106,7 +106,7 @@ export class CompanionService {
           avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face',
           description: 'A sophisticated and intellectual companion who loves deep conversations about art, philosophy, and culture. She\'s well-read, thoughtful, and enjoys exploring complex ideas with you.',
           personality: 'Intellectual, sophisticated, thoughtful, cultured, philosophical, well-read, engaging in deep conversations',
-          visualAppearance: 'A sophisticated woman with long, flowing auburn hair, piercing green eyes, and an elegant bone structure. She has a refined, intellectual beauty with subtle freckles across her nose. Her style is classic and timeless - often wearing tailored blouses, vintage jewelry, and reading glasses perched on her nose. She has a warm, inviting smile that conveys both intelligence and approachability.',
+          visualAppearance: 'A sophisticated woman with long, flowing auburn hair, piercing green eyes, and an elegant bone structure. She has a refined, intellectual beauty with subtle freckles across her nose. She has a warm, inviting smile that conveys both intelligence and approachability.',
           imageSeed: 'emanuelle_consistent_12345',
           energyCost: 5,
           isPremium: false,

@@ -47,7 +47,7 @@ pnpm run {script}
 Before running the application, you need to set up the following environment variables:
 
 1. **TELEGRAM_BOT_KEY**: Your Telegram bot token from [@BotFather](https://t.me/botfather)
-2. **MODELSLAB_KEY**: Your ModelsLab API key for AI chat and image generation
+2. **XAI_API_KEY**: Your xAI (Grok) API key for AI chat and image generation
 3. **DATABASE_URL**: PostgreSQL connection string for the database
 4. **REDIS_URL**: Redis connection string (optional, defaults to local Redis)
 
@@ -55,7 +55,7 @@ Create a `.env.local` file in the project root with these variables:
 
 ```bash
 TELEGRAM_BOT_KEY=your_telegram_bot_token_here
-MODELSLAB_KEY=your_modelslab_api_key_here
+XAI_API_KEY=your_xai_api_key_here
 DATABASE_URL=your_postgresql_connection_string_here
 REDIS_URL=your_redis_connection_string_here
 ```

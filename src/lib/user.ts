@@ -11,8 +11,10 @@ export class UserService {
       return cachedUserId;
     }
 
+    console.log("telegramUserId: ", telegramUserId)
+
     try {
-      let user = await prisma.users.findUnique({
+      let user = await prisma.users.findFirst({
         where: { telegram_id: telegramUserId },
       });
 

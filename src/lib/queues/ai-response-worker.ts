@@ -5,17 +5,36 @@ import { AIService, AIMessage } from '../ai';
 import { TelegramService, InlineKeyboardMarkup } from '../telegram';
 import { ConversationService } from '../conversation';
 import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
+import { prisma } from '@/core/db/prisma';
+
+function getAIBusyMessage(languageCode?: string): string {
+  const lang = languageCode?.toLowerCase() || 'en';
+  
+  if (lang.startsWith('ru')) {
+    return 'Извините, я сейчас занята. Напишу вам позже.';
+  } else if (lang.startsWith('ar')) {
+    return 'آسف، أنا مشغولة في الوقت الحالي. سأرسل لك رسالة لاحقاً.';
+  } else if (lang.startsWith('fr')) {
+    return 'Désolé, je suis occupée en ce moment. Je vous enverrai un message plus tard.';
+  } else if (lang.startsWith('es')) {
+    return 'Lo siento, estoy ocupada en este momento. Te enviaré un mensaje más tarde.';
+  } else if (lang.startsWith('de')) {
+    return 'Entschuldigung, ich bin im Moment beschäftigt. Ich schreibe dir später.';
+  } else {
+    return 'Sorry, I\'m busy at the moment. I\'ll message you later.';
+  }
+}
 
 console.log('🚀 Starting AI Response Queue Worker...');
 
-const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'MODELSLAB_KEY', 'DATABASE_URL'];
+const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'XAI_API_KEY', 'DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
   console.error('💡 Please create a .env file with the required variables:');
   console.error('   TELEGRAM_BOT_KEY=your_telegram_bot_token');
-  console.error('   MODELSLAB_KEY=your_modelslab_api_key');
+  console.error('   XAI_API_KEY=your_xai_api_key');
   console.error('   DATABASE_URL=your_postgresql_connection_string');
   process.exit(1);
 }
@@ -81,16 +100,29 @@ const aiResponseWorker = new Worker(
         }
       }
 
-      const actionButton: InlineKeyboardMarkup = {
-        inline_keyboard: [[
-          {
-            text: "📸 пришли фотографию",
-            callback_data: "request_photo"
-          }
-        ]]
-      };
 
-      await TelegramService.sendMessage(chatId, responseMessage, 'HTML', actionButton);
+      await TelegramService.sendMessage(chatId, responseMessage, 'HTML'/*, actionButton*/);
+      
+      if (dbChatId) {
+        try {
+          const chat = await prisma.chat.findUnique({
+            where: { id: dbChatId },
+            select: { user_id: true },
+          });
+          
+          if (chat) {
+            await prisma.users.update({
+              where: { id: chat.user_id },
+              data: {
+                energy: { decrement: 1 },
+              },
+            });
+            console.log(`Energy decremented for user ${chat.user_id}`);
+          }
+        } catch (energyError) {
+          console.error('Failed to decrement user energy:', energyError)
+        }
+      }
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       
@@ -99,7 +131,33 @@ const aiResponseWorker = new Worker(
     } catch (error) {
       console.error(`Error processing AI response job for chat ${chatId}:`, error);
       
-      const errorMessage = `<b>${companionName}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
+      let userLanguage = 'en';
+      if (dbChatId) {
+        try {
+          const chat = await prisma.chat.findUnique({
+            where: { id: dbChatId },
+            select: {
+              user: {
+                select: {
+                  settings: {
+                    select: {
+                      language: true,
+                    },
+                  },
+                },
+              },
+            },
+          });
+          
+          if (chat?.user?.settings?.language) {
+            userLanguage = chat.user.settings.language;
+          }
+        } catch (langError) {
+          console.error('Failed to get user language:', langError);
+        }
+      }
+      
+      const errorMessage = `<b>${companionName}</b>\n\n${getAIBusyMessage(userLanguage)}`;
       await TelegramService.sendMessage(chatId, errorMessage);
       
       throw error;

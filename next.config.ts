@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
     "https://t.me",
     "https://web.telegram.org",
     "https://web.telegram.org/a",
-    // Allow all ngrok domains for development using wildcard
     "*.ngrok-free.app",
     "*.ngrok.io",
     "*.ngrok.app",
