@@ -10,7 +10,7 @@ import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-import { closeMiniApp } from '@telegram-apps/sdk';
+import { miniApp } from '@tma.js/sdk-react';
 
 
 type AICompanion = {
@@ -58,7 +58,7 @@ export default function CompanionPage() {
           }),
         });
 
-        closeMiniApp()
+        miniApp.close()
 
       } catch (error) {
         // show error message

@@ -1,4 +1,4 @@
-import { mockTelegramEnv, isTMA, emitEvent } from '@telegram-apps/sdk-react';
+import { mockTelegramEnv, isTMA, emitEvent } from '@tma.js/sdk-react';
 
 // It is important, to mock the environment only for development purposes. When building the
 // application, the code inside will be tree-shaken, so you will not see it in your final bundle.
