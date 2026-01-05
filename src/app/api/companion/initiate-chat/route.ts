@@ -1,6 +1,7 @@
 import { prisma } from "@/core/db/prisma";
 import { ConversationService } from "@/lib/conversation";
 import { queueAIResponse } from "@/lib/queues/ai-response-queue";
+import { UserService } from "@/lib/user";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -41,6 +42,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(
                 { error: 'Companion not found' },
                 { status: 404 }
+            );
+        }
+
+        const energyCost = selectedCompanion.energyCost || 5;
+        const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
+        
+        if (!hasEnoughEnergy) {
+            const currentEnergy = await UserService.getEnergyBalance(userId);
+            return NextResponse.json(
+                { 
+                    error: 'Insufficient energy',
+                    required: energyCost,
+                    current: currentEnergy 
+                },
+                { status: 400 }
             );
         }
 
