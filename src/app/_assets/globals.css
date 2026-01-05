@@ -70,7 +70,7 @@
     padding: 0;
     /* Using Tailwind's arbitrary value helper keeps JIT happy */
     @apply bg-[color:var(--background)] text-[color:var(--foreground)];
-    font-family: var(--font-space-mono, 'Space Mono'), 'Courier New', 'Consolas', 'Menlo', monospace;
+    font-family: var(--font-space-mono, 'Space Mono', monospace);
     line-height: 1.6;
     letter-spacing: 0.025em;
     position: relative;
