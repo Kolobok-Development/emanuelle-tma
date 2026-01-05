@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { queueAIResponse } from '@/lib/queues/ai-response-queue';
-import { queueImageGeneration } from '@/lib/queues/image-generation-queue';
 import { CompanionService } from '@/lib/companions';
 import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
 import { UserService } from '@/lib/user';
 import { redis } from '@/lib/redis';
-import { prisma } from '@/core/db/prisma';
 
 const MAX_PAYLOAD_SIZE = 1024 * 1024; 
 const IDEMPOTENCY_TTL = 24 * 60 * 60;
-const ENERGY_COST_PER_MESSAGE = 1;
 
 function getNoEnergyMessage(languageCode?: string): string {
   const lang = languageCode?.toLowerCase() || 'en';
@@ -116,15 +113,6 @@ export async function POST(request: NextRequest) {
         from.username || from.first_name || undefined
       );
 
-      const user = await UserService.getUserById(userId);
-      if (!user || (user.energy || 0) < ENERGY_COST_PER_MESSAGE) {
-        const languageCode = from.language_code;
-        const noEnergyMessage = getNoEnergyMessage(languageCode);
-        await TelegramService.sendMessage(chat.id, noEnergyMessage);
-        console.log(`User ${from.id} has insufficient energy (${user?.energy || 0}/${ENERGY_COST_PER_MESSAGE})`);
-        return NextResponse.json({ ok: true });
-      }
-
       let selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(from.id));
       
       if (!selectedCompanion) {
@@ -181,40 +169,8 @@ export async function POST(request: NextRequest) {
         body.message.message_id,
         dbChatId
       );
-    }
 
-    if (body.callback_query) {
-      const { callback_query } = body;
-      const { data, message, from: callbackFrom, id: callbackId } = callback_query;
-
-      if (callbackId) {
-        const callbackKey = `webhook:callback:${callbackId}`;
-        const result = await redis.set(callbackKey, '1', 'EX', IDEMPOTENCY_TTL, 'NX');
-        
-        if (result === null) {
-          console.log(`Callback query ${callbackId} already processed, skipping`);
-          await TelegramService.answerCallbackQuery(callbackId);
-          return NextResponse.json({ ok: true });
-        }
-      }
-
-      console.log(`Received callback query: ${data} from user ${callbackFrom.id}`);
-
-      if (data === 'request_photo') {
-        const selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(callbackFrom.id));
-        
-        if (selectedCompanion) {
-          await queueImageGeneration(
-            message.chat.id,
-            selectedCompanion,
-            callbackFrom.username || callbackFrom.first_name || 'User',
-            undefined, 
-            message.message_id
-          );
-        }
-
-        await TelegramService.answerCallbackQuery(callback_query.id);
-      }
+      console.log(`Queued message from ${from.username || from.first_name} to ${selectedCompanion.name}: ${text}`);
     }
 
     return NextResponse.json({ ok: true });

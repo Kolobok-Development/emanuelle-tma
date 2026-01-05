@@ -103,26 +103,8 @@ const aiResponseWorker = new Worker(
 
       await TelegramService.sendMessage(chatId, responseMessage, 'HTML'/*, actionButton*/);
       
-      if (dbChatId) {
-        try {
-          const chat = await prisma.chat.findUnique({
-            where: { id: dbChatId },
-            select: { user_id: true },
-          });
-          
-          if (chat) {
-            await prisma.users.update({
-              where: { id: chat.user_id },
-              data: {
-                energy: { decrement: 1 },
-              },
-            });
-            console.log(`Energy decremented for user ${chat.user_id}`);
-          }
-        } catch (energyError) {
-          console.error('Failed to decrement user energy:', energyError)
-        }
-      }
+      // Note: Energy is already deducted in the webhook before queuing the job
+      // No need to decrement here to avoid double deduction
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       
