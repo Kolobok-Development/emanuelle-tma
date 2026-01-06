@@ -178,4 +178,49 @@ export class ConversationService {
       throw error;
     }
   }
+
+  static async deleteChatMessages(chatId: string): Promise<void> {
+    try {
+      await prisma.message.deleteMany({
+        where: { chat_id: chatId },
+      });
+    } catch (error) {
+      console.error('Error deleting chat messages:', error);
+      throw error;
+    }
+  }
+
+  static async getActiveChatByCompanion(userId: string, companionId: string): Promise<string | null> {
+    try {
+      const chat = await prisma.chat.findFirst({
+        where: {
+          user_id: userId,
+          companion_id: companionId,
+          is_active: true,
+        },
+        orderBy: { created_at: 'desc' },
+      });
+      return chat?.id || null;
+    } catch (error) {
+      console.error('Error getting active chat by companion:', error);
+      return null;
+    }
+  }
+
+  static async createChatWithCompanion(userId: string, companionId: string, title?: string): Promise<string> {
+    try {
+      const chat = await prisma.chat.create({
+        data: {
+          user_id: userId,
+          companion_id: companionId,
+          title: title,
+          is_active: true,
+        },
+      });
+      return chat.id;
+    } catch (error) {
+      console.error('Error creating chat with companion:', error);
+      throw error;
+    }
+  }
 }
