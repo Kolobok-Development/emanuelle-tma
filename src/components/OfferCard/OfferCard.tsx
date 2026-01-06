@@ -91,7 +91,7 @@ export function OfferCard({ offer, onPurchase, isLoading }: OfferCardProps) {
       </div>
 
       {/* Right section - Price */}
-      <div className="flex items-center self-stretch shrink-0">
+      <div className="flex items-center shrink-0">
         <p className="bg-gradient-to-r from-purple via-pink to-purple bg-clip-text text-transparent text-xl font-bold uppercase tracking-[0.4px] whitespace-nowrap">
           {formatPrice(offer.price_in_usd)}
         </p>

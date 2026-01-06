@@ -7,27 +7,27 @@ import { useTranslations } from 'next-intl';
 
 function BalanceSkeleton() {
   return (
-    <div className="relative flex w-full items-center justify-center gap-10">
-      <div className="flex flex-row items-center gap-2 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#fc9cff]/30 via-[#f886ff]/20 to-[#9a6cff]/30">
-          <Image src="/icons/dimaond.png" alt="Diamonds" width={20} height={20} />
+    <>
+      <div className="basis-0 flex gap-2 grow items-center justify-center min-w-0 relative shrink-0">
+        <div className="relative shrink-0 size-[28px] flex items-center justify-center">
+          <Image src="/icons/dimaond.png" alt="Diamonds" width={28} height={28} />
         </div>
-        <div className="flex flex-col items-center leading-snug">
-          <div className="h-8 w-12 animate-pulse rounded bg-white/20" />
+        <div className="h-5 w-12 animate-pulse rounded bg-white/20" />
+      </div>
+
+      <div className="flex flex-row items-center self-stretch">
+        <div className="flex gap-0 h-full items-start justify-center opacity-20 px-[2px] py-0 relative shrink-0 w-px">
+          <div className="absolute bg-[#f5f0ff] bottom-0 left-1/2 top-0 -translate-x-1/2 w-px" />
         </div>
       </div>
 
-      <div className="h-12 w-px bg-white/15" />
-
-      <div className="flex flex-row items-center gap-2 text-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ffb7f7]/25 via-[#ff89c9]/25 to-[#b473ff]/30">
-          <Image src="/icons/energy.png" alt="Energy" width={20} height={20} />
+      <div className="basis-0 flex gap-2 grow items-center justify-center min-w-0 relative shrink-0">
+        <div className="relative shrink-0 size-[28px] flex items-center justify-center">
+          <Image src="/icons/energy.png" alt="Energy" width={28} height={28} />
         </div>
-        <div className="flex flex-col items-center leading-snug">
-          <div className="h-8 w-12 animate-pulse rounded bg-white/20" />
-        </div>
+        <div className="h-5 w-12 animate-pulse rounded bg-white/20" />
       </div>
-    </div>
+    </>
   );
 }
 
@@ -48,33 +48,40 @@ export function BalanceHeader() {
             {t('balance.title')}
           </h1>
 
-          <div className="relative flex w-full items-center justify-between gap-6 overflow-hidden rounded-2xl border border-white/15 p-2">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-l from-[#9C4DFF] via-[#DB7AE6] to-[#FF4FBF] opacity-20" />
-
+          <div 
+            className="relative flex w-full items-center overflow-hidden rounded-[12px] border border-[#9c4dff] py-[10px]"
+            style={{
+              backgroundImage: `linear-gradient(104.414deg, rgba(156, 77, 255, 0.2) 0.38907%, rgba(219, 122, 230, 0.2) 50%, rgba(255, 79, 191, 0.2) 99.611%), linear-gradient(90deg, rgb(65, 56, 71) 0%, rgb(65, 56, 71) 100%)`
+            }}
+          >
             {isBalanceRefetching ? (
               <BalanceSkeleton />
             ) : (
-              <div className="relative flex w-full items-center justify-center gap-10">
-                <div className="flex flex-row items-center gap-2 text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#fc9cff]/30 via-[#f886ff]/20 to-[#9a6cff]/30">
-                    <Image src="/icons/dimaond.png" alt="Diamonds" width={20} height={20} />
+              <>
+                <div className="basis-0 flex gap-2 grow items-center justify-center min-w-0 relative shrink-0">
+                  <div className="relative shrink-0 size-[28px] flex items-center justify-center">
+                    <Image src="/icons/dimaond.png" alt="Diamonds" width={28} height={28} />
                   </div>
-                  <div className="flex flex-col items-center leading-snug">
-                    <span className="text-2xl font-semibold text-white">{user?.diamonds ?? 0}</span>
+                  <p className="font-bold leading-normal relative shrink-0 text-[#f5f0ff] text-[20px] whitespace-nowrap tracking-[0.4px]">
+                    {user?.diamonds ?? 0}
+                  </p>
+                </div>
+
+                <div className="flex flex-row items-center self-stretch">
+                  <div className="flex gap-0 h-full items-start justify-center opacity-20 px-[2px] py-0 relative shrink-0 w-px">
+                    <div className="absolute bg-[#f5f0ff] bottom-0 left-1/2 top-0 -translate-x-1/2 w-px" />
                   </div>
                 </div>
 
-                <div className="h-12 w-px bg-white/15" />
-
-                <div className="flex flex-row items-center gap-2 text-center">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#ffb7f7]/25 via-[#ff89c9]/25 to-[#b473ff]/30">
-                    <Image src="/icons/energy.png" alt="Energy" width={20} height={20} />
+                <div className="basis-0 flex gap-2 grow items-center justify-center min-w-0 relative shrink-0">
+                  <div className="relative shrink-0 size-[28px] flex items-center justify-center">
+                    <Image src="/icons/energy.png" alt="Energy" width={28} height={28} />
                   </div>
-                  <div className="flex flex-col items-center leading-snug">
-                    <span className="text-2xl font-semibold text-white">{user?.energy ?? 0}</span>
-                  </div>
+                  <p className="font-bold leading-normal relative shrink-0 text-[#f5f0ff] text-[20px] whitespace-nowrap tracking-[0.4px]">
+                    {user?.energy ?? 0}
+                  </p>
                 </div>
-              </div>
+              </>
             )}
           </div>
         </div>

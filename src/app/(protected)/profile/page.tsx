@@ -139,7 +139,7 @@ export default function Profile() {
   };
 
   return (
-    <div className="relative flex flex-1 flex-col px-4 py-6 gap-6">
+    <div className="relative flex flex-col px-4 py-6 gap-6">
       {/* Promocode Section */}
       <Card className="bg-muted-dark border-border">
         <CardHeader>
