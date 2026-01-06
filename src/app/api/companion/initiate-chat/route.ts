@@ -8,6 +8,24 @@ import { redis } from "@/lib/redis";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
+function getInitialGreeting(languageCode?: string): string {
+  const lang = languageCode?.toLowerCase() || 'en';
+  
+  if (lang.startsWith('ru')) {
+    return 'Привет';
+  } else if (lang.startsWith('ar')) {
+    return 'مرحبا، كيف حالك؟';
+  } else if (lang.startsWith('fr')) {
+    return 'Bonjour';
+  } else if (lang.startsWith('es')) {
+    return 'Hola';
+  } else if (lang.startsWith('de')) {
+    return 'Hallo';
+  } else {
+    return 'Hello';
+  }
+}
+
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(request);
@@ -22,6 +40,13 @@ export async function POST(request: NextRequest) {
         
         const user = await prisma.users.findUnique({
             where: { id: userId },
+            include: {
+                settings: {
+                    select: {
+                        language: true,
+                    },
+                },
+            },
         });
         if (!user) {
             return NextResponse.json(
@@ -31,6 +56,7 @@ export async function POST(request: NextRequest) {
         }
         
         const telegramChatId = Number(user.telegram_id);
+        const userLanguage = user.settings?.language || 'en';
         
         const selectedCompanion = await prisma.aICompanion.findUnique({
             where: { id: companionId },
@@ -99,7 +125,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const initialMessage = "Hello, how are you?";
+        const initialMessage = getInitialGreeting(userLanguage);
         try {
             await ConversationService.saveMessage(dbChatId, 'USER', initialMessage);
         } catch (error) {
