@@ -84,12 +84,12 @@ export default function BalancePage() {
   }
 
   return (
-    <div className="relative flex flex-1 flex-col items-center px-4">
+    <div className="relative flex flex-1 flex-col items-center px-4 pb-5">
       {status === 'loading' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" />
       )}
       
-      <Tabs defaultValue="combo" className="absolute -top-4 w-[85%] max-w-md">
+      <Tabs defaultValue="combo" className="relative -top-4 w-[85%] max-w-md">
         <TabsList className="mx-auto grid h-auto w-full grid-cols-3 rounded-xl border bg-border p-1">
           <TabsTrigger
             className="rounded-md px-4 py-2 text-base font-semibold text-white/70 transition-colors data-[state=active]:bg-gradient-pink-purple data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(255,108,240,0.55)]"

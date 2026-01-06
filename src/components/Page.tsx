@@ -42,12 +42,11 @@ export function Page({ children, back = true, showHeader = true, header }: Props
 
   return (
     <div 
-      className="above-mask"
+      className="above-mask flex flex-col min-h-screen"
       style={{
-        paddingTop: `2.5rem`,
+        paddingTop: `calc(<header height> + var(--tg-viewport-safe-area-inset-top, 0px))`,
         paddingLeft: `var(--tg-viewport-safe-area-inset-left, 0px)`,
-        paddingRight: `var(--tg-viewport-safe-area-inset-right, 0px)`,
-        paddingBottom: `var(--tg-viewport-safe-area-inset-bottom, 0px)`,
+        paddingRight: `var(--tg-viewport-safe-area-inset-right, 0px)`
       }}
     >
       <Toaster
@@ -72,7 +71,9 @@ export function Page({ children, back = true, showHeader = true, header }: Props
         }}
       />
       {showHeader && (header ?? <Header />)}
-      {children}
+      <div className="flex-1 flex  pb-[calc(5rem+var(--tg-viewport-safe-area-inset-bottom,0px))] ">
+        {children}
+      </div>
       <BottomNavigation />
     </div>
   );
