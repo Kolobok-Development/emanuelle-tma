@@ -2,13 +2,32 @@ import { prisma } from "@/core/db/prisma";
 import { ConversationService } from "@/lib/conversation";
 import { queueAIResponse } from "@/lib/queues/ai-response-queue";
 import { UserService } from "@/lib/user";
+import { CompanionService } from "@/lib/companions";
+import { CacheService } from "@/lib/cache";
+import { redis } from "@/lib/redis";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
-
+function getInitialGreeting(languageCode?: string): string {
+  const lang = languageCode?.toLowerCase() || 'en';
+  
+  if (lang.startsWith('ru')) {
+    return 'Привет';
+  } else if (lang.startsWith('ar')) {
+    return 'مرحبا، كيف حالك؟';
+  } else if (lang.startsWith('fr')) {
+    return 'Bonjour';
+  } else if (lang.startsWith('es')) {
+    return 'Hola';
+  } else if (lang.startsWith('de')) {
+    return 'Hallo';
+  } else {
+    return 'Hello';
+  }
+}
 
 export async function POST(request: NextRequest) {
-    try{
+    try {
         const session = await getServerSession(request);
         if (!session) {
             return NextResponse.json(
@@ -19,12 +38,15 @@ export async function POST(request: NextRequest) {
         const userId = session.user.id;
         const { companionId } = await request.json();
         
-        const dbChatId = await ConversationService.getOrCreateActiveChat(userId);
-
-        console.log('dbChatId: ', dbChatId);
-
         const user = await prisma.users.findUnique({
             where: { id: userId },
+            include: {
+                settings: {
+                    select: {
+                        language: true,
+                    },
+                },
+            },
         });
         if (!user) {
             return NextResponse.json(
@@ -34,16 +56,59 @@ export async function POST(request: NextRequest) {
         }
         
         const telegramChatId = Number(user.telegram_id);
+        const userLanguage = user.settings?.language || 'en';
         
         const selectedCompanion = await prisma.aICompanion.findUnique({
             where: { id: companionId },
-        })
+        });
         if (!selectedCompanion) {
             return NextResponse.json(
                 { error: 'Companion not found' },
                 { status: 404 }
             );
         }
+
+        const existingActiveChat = await prisma.chat.findFirst({
+            where: {
+                user_id: userId,
+                is_active: true,
+            },
+            orderBy: { created_at: 'desc' },
+        });
+
+        if (existingActiveChat && existingActiveChat.companion_id !== companionId) {
+            console.log(`Cleaning up previous chat ${existingActiveChat.id} with companion ${existingActiveChat.companion_id}`);
+            
+            await ConversationService.deleteChatMessages(existingActiveChat.id);
+            
+            await ConversationService.deactivateChat(existingActiveChat.id);
+            
+            try {
+                const pattern = `webhook:processed:${telegramChatId}:*`;
+                const keys = await redis.keys(pattern);
+                if (keys.length > 0) {
+                    await redis.del(...keys);
+                    console.log(`Cleared ${keys.length} webhook processed cache keys`);
+                }
+            } catch (error) {
+                console.error('Error clearing webhook cache:', error);
+            }
+            
+            await CacheService.delete(CacheService.keys.companionByTelegramId(telegramChatId.toString()));
+        }
+
+        let dbChatId: string;
+        const existingChatWithCompanion = await ConversationService.getActiveChatByCompanion(userId, companionId);
+        
+        if (existingChatWithCompanion) {
+            dbChatId = existingChatWithCompanion;
+            console.log(`Using existing chat ${dbChatId} with companion ${companionId}`);
+        } else {
+            dbChatId = await ConversationService.createChatWithCompanion(userId, companionId);
+            console.log(`Created new chat ${dbChatId} with companion ${companionId}`);
+        }
+
+        await CompanionService.selectCompanion(BigInt(telegramChatId), companionId);
 
         const energyCost = selectedCompanion.energyCost || 5;
         const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
@@ -60,20 +125,28 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        const initialMessage = getInitialGreeting(userLanguage);
+        try {
+            await ConversationService.saveMessage(dbChatId, 'USER', initialMessage);
+        } catch (error) {
+            console.error('Error saving initial message:', error);
+        }
+
         await queueAIResponse(
             telegramChatId,
-            "Hello, how are you?",
+            initialMessage,
             selectedCompanion,
             user.username || undefined,
             undefined,
             dbChatId
-          );
+        );
 
-        return NextResponse.json(true)
-    }catch(error){
+        return NextResponse.json({ success: true, chatId: dbChatId });
+    } catch (error) {
+        console.error('Error initiating chat:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }
-          );
+        );
     }
 }
