@@ -46,6 +46,8 @@ export async function POST(request: NextRequest) {
         data: {
           telegram_id: BigInt(telegramUser.id), // Consistent BigInt
           username: telegramUser.username || null,
+          diamonds: 10,
+          energy: 100,
           settings: {
             create: {
               tone: "friendly",
