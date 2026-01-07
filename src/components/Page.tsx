@@ -44,7 +44,7 @@ export function Page({ children, back = true, showHeader = true, header }: Props
     <div 
       className="above-mask flex flex-col min-h-screen"
       style={{
-        paddingTop: `calc(<header height> + var(--tg-viewport-safe-area-inset-top, 0px))`,
+        paddingTop: `2rem`,
         paddingLeft: `var(--tg-viewport-safe-area-inset-left, 0px)`,
         paddingRight: `var(--tg-viewport-safe-area-inset-right, 0px)`
       }}

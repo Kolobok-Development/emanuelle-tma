@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
-import { Space_Mono } from 'next/font/google';
+import { IBM_Plex_Mono, Space_Mono } from 'next/font/google';
 
 import { Root } from '@/components/Root/Root';
 import { I18nProvider } from '@/core/i18n/provider';
@@ -10,8 +10,8 @@ import { Header } from '@/components/Header/Header';
 import './_assets/globals.css';
 
 // Configure Space Mono font
-const spaceMono = Space_Mono({
-  subsets: ['latin', 'latin-ext'],
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
   weight: ['400', '700'],
   variable: '--font-space-mono',
   display: 'swap',
@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
   const locale = await getLocale();
 
   return (
-    <html className={`dark ${spaceMono.variable}`} lang={locale} suppressHydrationWarning >
+    <html className={`dark ${ibmPlexMono.variable}`} lang={locale} suppressHydrationWarning >
       <body>
         <div className='above-mask'>
            <I18nProvider>
