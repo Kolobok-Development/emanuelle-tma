@@ -6,26 +6,28 @@ import { trackHttpMetrics, trackDBQuery } from "@/lib/metrics-helpers";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
-  let response: NextResponse;
+  let response: NextResponse | undefined;
   try {
     const { initData } = await request.json();
 
     if (!initData) {
       globalThis?.logger?.warn({}, 'No initData provided');
-      return NextResponse.json(
+      response = NextResponse.json(
         { error: "No initData provided" },
         { status: 400 }
       );
+      return response;
     }
 
     const isAuthorized = process.env.NODE_ENV === 'development' || isValid(initData, process.env.TELEGRAM_BOT_KEY as string);
 
     if (!isAuthorized) {
       globalThis?.logger?.warn({}, 'Invalid initData - authorization failed');
-      return NextResponse.json(
+      response = NextResponse.json(
         { error: "Invalid initData", details: "Authorization failed" },
         { status: 401 }
       );
+      return response;
     }
 
     const parsedInitData = parse(initData);
@@ -33,10 +35,11 @@ export async function POST(request: NextRequest) {
 
     if (!telegramUser) {
       globalThis?.logger?.warn({}, 'Telegram user not found in initData');
-      return NextResponse.json(
+      response = NextResponse.json(
         { error: "Invalid initData", details: "Telegram user not found" },
         { status: 401 }
       );
+      return response;
     }
 
     globalThis?.logger?.info({ telegramUserId: telegramUser.id, username: telegramUser.username }, 'Processing authentication');
