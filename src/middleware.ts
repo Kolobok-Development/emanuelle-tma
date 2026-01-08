@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { jwtVerify } from "jose";
 
+
 export async function middleware(request: NextRequest) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const startTime = Date.now();
 
 
     const { pathname } = request.nextUrl;
@@ -42,6 +44,7 @@ export async function middleware(request: NextRequest) {
         "/api/payment/create-invoice": "*", // Protected - requires JWT to create payments
         "/api/payment/webhook": true, // Public - used for webhook
         "/api/profile/*": "*", // Protected - requires JWT to update profile
+        "/api/metrics": true, // Public - used for metrics
       
         // Page Routes - these require authentication
         "/": true,
@@ -70,20 +73,22 @@ export async function middleware(request: NextRequest) {
 
 
     if (matchedConfig === null) {
+        globalThis?.logger?.debug({ pathname }, 'Route not matched, redirecting to home');
         const url = request.nextUrl.clone();
         url.pathname = "/";
         return NextResponse.redirect(url);
     }
 
     if (matchedConfig === true) {
+        globalThis?.logger?.debug({ pathname, duration: Date.now() - startTime }, 'Public route, allowing access');
         return NextResponse.next();
     }
 
     // For routes that require authentication (matchedConfig === "*")
-    const cookie = request.cookies.get(COOKIE_NAME);;
+    const cookie = request.cookies.get(COOKIE_NAME);
 
-    console.log("Cookie---->", cookie);
     if (!cookie) {
+        globalThis?.logger?.warn({ pathname }, 'No authentication cookie found');
         // Check if this is an API route
         if (pathname.startsWith('/api/')) {
             return NextResponse.json(
@@ -98,10 +103,10 @@ export async function middleware(request: NextRequest) {
     const jwt = cookie.value;
 
     try {
-        const  { payload } = await jwtVerify(jwt, secret, {});
-
+        const { payload } = await jwtVerify(jwt, secret, {});
 
         if (!payload) {
+            globalThis?.logger?.warn({ pathname }, 'Invalid JWT payload');
             // Check if this is an API route
             if (pathname.startsWith('/api/')) {
                 return NextResponse.json(
@@ -113,9 +118,18 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
+        globalThis?.logger?.debug({ 
+            pathname, 
+            userId: payload.sub,
+            duration: Date.now() - startTime
+        }, 'Authentication successful');
         return NextResponse.next(); 
 
     } catch(error) {
+        globalThis?.logger?.warn({ 
+            pathname,
+            error: error instanceof Error ? error.message : String(error)
+        }, 'JWT verification failed');
         // Check if this is an API route
         if (pathname.startsWith('/api/')) {
             return NextResponse.json(

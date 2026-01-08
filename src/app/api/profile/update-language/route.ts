@@ -3,10 +3,13 @@ import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 import { locales } from "@/core/i18n/config";
 
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   try {
     const session = await getServerSession(request);
     if (!session) {
+      globalThis?.logger?.warn({}, 'No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -17,6 +20,7 @@ export async function POST(request: NextRequest) {
     const { language } = await request.json();
 
     if (!language || typeof language !== 'string') {
+      globalThis?.logger?.warn({ userId }, 'Invalid language provided');
       return NextResponse.json(
         { error: 'Language is required' },
         { status: 400 }
@@ -25,11 +29,14 @@ export async function POST(request: NextRequest) {
 
     // Validate language
     if (!locales.includes(language as any)) {
+      globalThis?.logger?.warn({ userId, language }, 'Invalid language code');
       return NextResponse.json(
         { error: 'Invalid language' },
         { status: 400 }
       );
     }
+
+    globalThis?.logger?.info({ userId, language }, 'Updating user language');
 
     // Update or create user settings
     if (session.user.settings) {
@@ -50,12 +57,22 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    globalThis?.logger?.info({ 
+      userId,
+      language,
+      duration: Date.now() - startTime
+    }, 'Language updated successfully');
+
     return NextResponse.json({
       success: true,
       language,
     });
   } catch (error) {
-    console.error('Error updating language:', error);
+    globalThis?.logger?.error({ 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: Date.now() - startTime
+    }, 'Error updating language');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

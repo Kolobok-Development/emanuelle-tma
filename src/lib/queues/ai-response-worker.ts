@@ -6,6 +6,7 @@ import { TelegramService, InlineKeyboardMarkup } from '../telegram';
 import { ConversationService } from '../conversation';
 import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
 import { prisma } from '@/core/db/prisma';
+import { trackQueueJob, trackAIRequest } from '../metrics-helpers';
 
 function getAIBusyMessage(languageCode?: string): string {
   const lang = languageCode?.toLowerCase() || 'en';
@@ -44,7 +45,9 @@ console.log('✅ Environment variables loaded successfully');
 const aiResponseWorker = new Worker(
   'ai-response',
   async (job: Job<AIResponseJobData>) => {
-    const { chatId, companionName, companionPersonality, companionDescription, username, dbChatId } = job.data;
+    const { chatId, companionName, companionPersonality, companionDescription, username, dbChatId, companionId } = job.data;
+    const jobStartTime = Date.now();
+    const waitTime = job.timestamp ? (Date.now() - job.timestamp) / 1000 : 0;
     
     console.log(`Processing AI response job for chat ${chatId}, companion: ${companionName}`);
     
@@ -64,13 +67,16 @@ const aiResponseWorker = new Worker(
       
       await TelegramService.sendChatAction(chatId, 'typing');
       
+      const aiStartTime = Date.now();
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
         companionName,
         companionPersonality,
         companionDescription,
-        username
+        username,
+        companionId
       );
+      const aiDuration = (Date.now() - aiStartTime) / 1000;
 
       if (aiResponse.error) {
         throw new Error(aiResponse.error);
@@ -108,6 +114,11 @@ const aiResponseWorker = new Worker(
       
       console.log(`AI response sent successfully for chat ${chatId}`);
       
+      // Track metrics
+      const jobDuration = (Date.now() - jobStartTime) / 1000;
+      trackQueueJob('ai-response', 'completed', jobDuration, waitTime);
+      // AI metrics are tracked in AIService.generateCompanionResponse
+      
       return { success: true, response: responseMessage };
       
     } catch (error) {
@@ -141,6 +152,11 @@ const aiResponseWorker = new Worker(
       
       const errorMessage = `<b>${companionName}</b>\n\n${getAIBusyMessage(userLanguage)}`;
       await TelegramService.sendMessage(chatId, errorMessage);
+      
+      // Track metrics for failed job
+      const jobDuration = (Date.now() - jobStartTime) / 1000;
+      trackQueueJob('ai-response', 'failed', jobDuration, waitTime);
+      // AI metrics are tracked in AIService.generateCompanionResponse
       
       throw error;
     }

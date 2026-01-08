@@ -1,5 +1,6 @@
 import { redis } from '@/lib/redis';
 
+
 export const MAX_PAYLOAD_SIZE = 1024 * 1024; 
 export const IDEMPOTENCY_TTL = 24 * 60 * 60;
 export const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_KEY;
@@ -12,7 +13,7 @@ export async function isMessageProcessed(chatId: number, messageId: number): Pro
 
 export async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
   if (!BOT_TOKEN) {
-    console.warn('Bot token not configured, cannot send message');
+    globalThis?.logger?.warn({ chatId }, 'Bot token not configured, cannot send message');
     return;
   }
   
@@ -23,7 +24,10 @@ export async function sendTelegramMessage(chatId: number, text: string): Promise
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
+    globalThis?.logger?.error({ 
+      error: error instanceof Error ? error.message : String(error),
+      chatId
+    }, 'Error sending Telegram message');
   }
 }
 

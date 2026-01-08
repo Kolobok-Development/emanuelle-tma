@@ -2,10 +2,13 @@ import { prisma } from "@/core/db/prisma";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
+
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
   try {
     const session = await getServerSession(request);
     if (!session) {
+      globalThis?.logger?.warn({}, 'No session found');
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -14,6 +17,8 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id;
     const { promocode } = await request.json();
+    
+    globalThis?.logger?.info({ userId, promocode }, 'Applying promocode');
 
     // Validate input
     if (!promocode || typeof promocode !== 'string' || promocode.trim().length === 0) {
@@ -105,6 +110,13 @@ export async function POST(request: NextRequest) {
     });
 
     // Success response
+    globalThis?.logger?.info({ 
+      userId,
+      promocode,
+      rewards: result,
+      duration: Date.now() - startTime
+    }, 'Promocode applied successfully');
+    
     return NextResponse.json({
       success: true,
       message: 'Promocode applied successfully!',
@@ -115,7 +127,12 @@ export async function POST(request: NextRequest) {
       balance: result.newBalance,
     });
   } catch (error: any) {
-    console.error('Error applying promocode:', error);
+    globalThis?.logger?.error({ 
+      error: error.message,
+      userId,
+      promocode,
+      duration: Date.now() - startTime
+    }, 'Error applying promocode');
 
     // Handle specific error cases
     if (error.message === 'INVALID_CODE') {
