@@ -13,10 +13,9 @@ import './_assets/globals.css';
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
   weight: ['400', '700'],
-  variable: '--font-space-mono',
-  display: 'swap',
+  variable: '--font-ibm-plex-mono',
+  
 });
-
 
 export const metadata: Metadata = {
   title: 'Your Application Title Goes Here',
