@@ -1,5 +1,4 @@
 import { Logger } from 'pino';
-import { registerOTel } from '@vercel/otel';
 
 declare global {
     var logger: Logger | undefined;
@@ -104,7 +103,6 @@ export async function register() {
         };
 
         console.log('✅ Prometheus metrics initialized');
-        registerOTel({ serviceName: 'emanuelle-tma' });
 
     }
 }
