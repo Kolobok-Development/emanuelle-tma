@@ -4,11 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { OfferType } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
   try {
     // JWT Authentication
     const token = request.cookies.get(COOKIE_NAME)?.value;
 
     if (!token) {
+      globalThis?.logger?.warn({}, 'No session token found');
       return NextResponse.json(
         { error: 'No session found' },
         { status: 401 }
@@ -18,7 +20,8 @@ export async function GET(request: NextRequest) {
     // Verify JWT and check if session exists in database
     try {
       await decrypt(token);
-    } catch {
+    } catch (error) {
+      globalThis?.logger?.warn({ error: error instanceof Error ? error.message : String(error) }, 'Invalid session token');
       return NextResponse.json(
         { error: 'Invalid session token' },
         { status: 401 }
@@ -30,6 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!session || session.expires_at < new Date()) {
+      globalThis?.logger?.warn({ sessionId: session?.id }, 'Session expired or not found');
       return NextResponse.json(
         { error: 'Session expired or not found' },
         { status: 401 }
@@ -58,6 +62,8 @@ export async function GET(request: NextRequest) {
       where.is_active = true;
     }
 
+    globalThis?.logger?.info({ userId: session.user_id, filters: { type, active } }, 'Fetching offers');
+
     // Fetch offers from database
     const offers = await prisma.offers.findMany({
       where,
@@ -81,13 +87,23 @@ export async function GET(request: NextRequest) {
       is_active: offer.is_active,
     }));
 
+    globalThis?.logger?.info({ 
+      userId: session.user_id,
+      offerCount: formattedOffers.length,
+      duration: Date.now() - startTime
+    }, 'Offers retrieved successfully');
+
     return NextResponse.json({
       success: true,
       offers: formattedOffers,
     });
 
   } catch (error) {
-    console.error('Error fetching offers:', error);
+    globalThis?.logger?.error({ 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: Date.now() - startTime
+    }, 'Error fetching offers');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

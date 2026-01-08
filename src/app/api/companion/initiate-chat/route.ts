@@ -8,6 +8,7 @@ import { redis } from "@/lib/redis";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
+
 function getInitialGreeting(languageCode?: string): string {
   const lang = languageCode?.toLowerCase() || 'en';
   
@@ -77,7 +78,11 @@ export async function POST(request: NextRequest) {
         });
 
         if (existingActiveChat && existingActiveChat.companion_id !== companionId) {
-            console.log(`Cleaning up previous chat ${existingActiveChat.id} with companion ${existingActiveChat.companion_id}`);
+            globalThis?.logger?.info({ 
+                previousChatId: existingActiveChat.id,
+                previousCompanionId: existingActiveChat.companion_id,
+                newCompanionId: companionId
+            }, 'Cleaning up previous chat');
             
             await ConversationService.deleteChatMessages(existingActiveChat.id);
             
@@ -88,10 +93,12 @@ export async function POST(request: NextRequest) {
                 const keys = await redis.keys(pattern);
                 if (keys.length > 0) {
                     await redis.del(...keys);
-                    console.log(`Cleared ${keys.length} webhook processed cache keys`);
+                    globalThis?.logger?.info({ keyCount: keys.length }, 'Cleared webhook processed cache keys');
                 }
             } catch (error) {
-                console.error('Error clearing webhook cache:', error);
+                globalThis?.logger?.error({ 
+                    error: error instanceof Error ? error.message : String(error)
+                }, 'Error clearing webhook cache');
             }
             
             await CacheService.delete(CacheService.keys.companionByTelegramId(telegramChatId.toString()));
@@ -102,10 +109,10 @@ export async function POST(request: NextRequest) {
         
         if (existingChatWithCompanion) {
             dbChatId = existingChatWithCompanion;
-            console.log(`Using existing chat ${dbChatId} with companion ${companionId}`);
+            globalThis?.logger?.info({ chatId: dbChatId, companionId }, 'Using existing chat');
         } else {
             dbChatId = await ConversationService.createChatWithCompanion(userId, companionId);
-            console.log(`Created new chat ${dbChatId} with companion ${companionId}`);
+            globalThis?.logger?.info({ chatId: dbChatId, companionId }, 'Created new chat');
         }
 
         await CompanionService.selectCompanion(BigInt(telegramChatId), companionId);
@@ -129,7 +136,10 @@ export async function POST(request: NextRequest) {
         try {
             await ConversationService.saveMessage(dbChatId, 'USER', initialMessage);
         } catch (error) {
-            console.error('Error saving initial message:', error);
+            globalThis?.logger?.error({ 
+                error: error instanceof Error ? error.message : String(error),
+                chatId: dbChatId
+            }, 'Error saving initial message');
         }
 
         await queueAIResponse(
@@ -141,9 +151,18 @@ export async function POST(request: NextRequest) {
             dbChatId
         );
 
+        globalThis?.logger?.info({ 
+            userId,
+            companionId,
+            chatId: dbChatId
+        }, 'Chat initiated successfully');
+
         return NextResponse.json({ success: true, chatId: dbChatId });
     } catch (error) {
-        console.error('Error initiating chat:', error);
+        globalThis?.logger?.error({ 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        }, 'Error initiating chat');
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

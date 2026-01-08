@@ -3,21 +3,23 @@ import { COOKIE_NAME, decrypt } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) { 
+    const startTime = Date.now();
     try {
         const token = request.cookies.get(COOKIE_NAME)?.value;
 
         if (!token) {
+            globalThis?.logger?.warn({}, 'No session token found');
             return NextResponse.json(
               { error: 'No session found' },
               { status: 401 }
             );
         }
 
-
-          // Verify JWT and check if session exists in database
+        // Verify JWT and check if session exists in database
         try {
             await decrypt(token);
-        } catch {
+        } catch (error) {
+            globalThis?.logger?.warn({ error: error instanceof Error ? error.message : String(error) }, 'Invalid session token');
             return NextResponse.json(
             { error: 'Invalid session token' },
             { status: 401 }
@@ -29,13 +31,18 @@ export async function GET(request: NextRequest) {
             include: { user: { include: { settings: true } } }
         });
 
-
         if (!session || session.expires_at < new Date()) {
+            globalThis?.logger?.warn({ sessionId: session?.id, expired: session?.expires_at }, 'Session expired or not found');
             return NextResponse.json(
               { error: 'Session expired or not found' },
               { status: 401 }
             );
         }
+
+        globalThis?.logger?.info({ 
+            userId: session.user.id,
+            duration: Date.now() - startTime
+        }, 'User data retrieved successfully');
 
         return NextResponse.json({
             success: true,
@@ -54,6 +61,11 @@ export async function GET(request: NextRequest) {
           });
 
     }catch (error) {
+        globalThis?.logger?.error({ 
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            duration: Date.now() - startTime
+        }, 'Error retrieving user data');
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

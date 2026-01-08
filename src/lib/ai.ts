@@ -2,6 +2,7 @@ import { generateText } from 'ai';
 import { createXai } from '@ai-sdk/xai';
 import type { CoreMessage } from 'ai';
 import { aiServiceCircuitBreaker } from './circuit-breaker';
+import { trackAIRequest } from './metrics-helpers';
 
 export interface AIMessage {
   role: 'user' | 'assistant' | 'system';
@@ -157,7 +158,8 @@ export class AIService {
     companionName: string,
     companionPersonality: string,
     companionDescription: string,
-    username?: string
+    username?: string,
+    companionId?: string
   ): Promise<AIResponse> {
 
     const systemMessage: AIMessage = {
@@ -193,7 +195,21 @@ export class AIService {
 
     const messagesWithSystem = [systemMessage, ...messages];
     
-    return this.generateMessage(messagesWithSystem);
+    const startTime = Date.now();
+    const result = await this.generateMessage(messagesWithSystem);
+    const duration = (Date.now() - startTime) / 1000;
+    
+    // Track AI metrics
+    if (companionId) {
+      trackAIRequest(
+        companionId,
+        result.error ? 'failed' : 'success',
+        duration,
+        result.tokens_used
+      );
+    }
+    
+    return result;
   }
 }
 

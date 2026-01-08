@@ -17,39 +17,33 @@ async function sendTelegramMessage(chatId: number, text: string) {
 }
 
 export async function POST(request: NextRequest) {
-  const timestamp = new Date().toISOString();
-  console.log(`\n🔔 [${timestamp}] Payment webhook received`);
+  const startTime = Date.now();
+  globalThis?.logger?.info({}, 'Payment webhook received');
   
   try {
     // Validate webhook authentication
-    console.log('🔐 Validating webhook authentication...');
     if (!validateTelegramWebhook(request)) {
-      console.error('❌ Webhook validation failed - Unauthorized');
+      globalThis?.logger?.warn({}, 'Webhook validation failed - Unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log('✅ Webhook authentication passed');
+    globalThis?.logger?.info({}, 'Webhook authentication passed');
 
     if (!BOT_TOKEN) {
-      console.error('❌ Bot token not configured');
+      globalThis?.logger?.error({}, 'Bot token not configured');
       return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
     }
 
     const update = await request.json();
-    console.log('📦 ________Received update:______', JSON.stringify(update, null, 2));
-
+    globalThis?.logger?.info({ updateType: Object.keys(update) }, 'Received payment webhook update');
 
     // Step 1: Approve the payment
     if (update.pre_checkout_query) {
-      console.log('💳 Processing pre_checkout_query...');
       const { id: queryId, invoice_payload, total_amount, currency } = update.pre_checkout_query;
-      console.log(`   Query ID: ${queryId}`);
-      console.log(`   Invoice Payload (reqyest_id): ${invoice_payload}`);
-      console.log(`   Total Amount: ${total_amount}`);
-      console.log(`   Currency: ${currency}`);
+      globalThis?.logger?.info({ queryId, invoice_payload, total_amount, currency }, 'Processing pre_checkout_query');
 
       // Validate currency
       if (currency !== 'XTR') {
-        console.warn(`⚠️  Invalid currency: ${currency}, expected XTR`);
+        globalThis?.logger?.warn({ currency, queryId }, 'Invalid currency, expected XTR');
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -63,7 +57,6 @@ export async function POST(request: NextRequest) {
       }
 
       // Find pending transaction (invoice_payload is the offerId)
-      console.log(`🔍 Looking up transaction for offerId: ${invoice_payload}`);
       const transaction = await prisma.paymentTransactions.findFirst({
         where: {
           payload: { contains: invoice_payload },
@@ -74,28 +67,23 @@ export async function POST(request: NextRequest) {
       });
 
       if (!transaction) {
-        console.error(`❌ No pending transaction found for offerId: ${invoice_payload}`);
+        globalThis?.logger?.warn({ invoice_payload }, 'No pending transaction found for offerId');
       } else {
-        console.log(`✅ Found transaction:`, {
-          id: transaction.id,
+        globalThis?.logger?.info({ 
+          transactionId: transaction.id,
           offerId: transaction.offer_id,
           amount: transaction.amount,
-          status: transaction.status,
-          offer: transaction.offer ? {
-            id: transaction.offer.id,
-            diamonds: transaction.offer.diamonds,
-            energy: transaction.offer.energy
-          } : null
-        });
+          status: transaction.status
+        }, 'Found transaction');
       }
 
       if (!transaction || transaction.amount !== total_amount) {
-        console.error(`❌ Transaction validation failed:`, {
+        globalThis?.logger?.error({ 
           transactionExists: !!transaction,
           transactionAmount: transaction?.amount,
           expectedAmount: total_amount,
           amountsMatch: transaction?.amount === total_amount
-        });
+        }, 'Transaction validation failed');
         await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -109,7 +97,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Approve payment
-      console.log(`✅ Approving pre_checkout_query ${queryId}`);
+      globalThis?.logger?.info({ queryId }, 'Approving pre_checkout_query');
       const approveResponse = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerPreCheckoutQuery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -119,25 +107,25 @@ export async function POST(request: NextRequest) {
         }),
       });
       const approveResult = await approveResponse.json();
-      console.log(`📤 Pre-checkout approval response:`, approveResult);
+      globalThis?.logger?.info({ queryId, result: approveResult }, 'Pre-checkout approval response');
       return NextResponse.json({ ok: true });
     }
 
     // Step 2: Handle successful payment
     if (update.message?.successful_payment) {
-      console.log('💰 Processing successful payment...');
       const payment = update.message.successful_payment;
       const userId = update.message.from.id;
       const offerId = payment.invoice_payload; // This is the request_id
       
-      console.log(`   User ID: ${userId}`);
-      console.log(`   Offer ID (invoice_payload): ${offerId}`);
-      console.log(`   Payment Charge ID: ${payment.telegram_payment_charge_id}`);
-      console.log(`   Total Amount: ${payment.total_amount}`);
-      console.log(`   Currency: ${payment.currency}`);
+      globalThis?.logger?.info({ 
+        userId, 
+        offerId, 
+        chargeId: payment.telegram_payment_charge_id,
+        amount: payment.total_amount,
+        currency: payment.currency
+      }, 'Processing successful payment');
 
       // Find pending transaction
-      console.log(`🔍 Looking up transaction for offerId: ${offerId}`);
       const transaction = await prisma.paymentTransactions.findFirst({
         where: {
           payload: { contains: offerId },
@@ -148,56 +136,48 @@ export async function POST(request: NextRequest) {
       });
 
       if (!transaction) {
-        console.error(`❌ Transaction not found for offerId: ${offerId}`);
-        console.log(`   Searched for: offer_id=${offerId}, status=PENDING`);
+        globalThis?.logger?.warn({ offerId }, 'Transaction not found for offerId');
         return NextResponse.json({ ok: true });
       }
 
-      console.log(`✅ Found transaction:`, {
-        id: transaction.id,
+      globalThis?.logger?.info({ 
+        transactionId: transaction.id,
         offerId: transaction.offer_id,
         amount: transaction.amount,
-        status: transaction.status,
-        invoiceId: transaction.invoice_id,
-        createdAt: transaction.created_at,
-        offer: transaction.offer ? {
-          id: transaction.offer.id,
-          diamonds: transaction.offer.diamonds,
-          energy: transaction.offer.energy
-        } : null
-      });
+        status: transaction.status
+      }, 'Found transaction');
 
       // Check if already processed
       if (transaction.invoice_id) {
-        console.log(`⚠️  Payment ${payment.telegram_payment_charge_id} already processed (invoice_id: ${transaction.invoice_id})`);
+        globalThis?.logger?.warn({ 
+          chargeId: payment.telegram_payment_charge_id,
+          invoiceId: transaction.invoice_id
+        }, 'Payment already processed');
         return NextResponse.json({ ok: true });
       }
 
       // Get user
-      console.log(`🔍 Looking up user for telegram_id: ${userId}`);
-
       const user = await prisma.users.findUnique({
           where: { telegram_id: BigInt(userId) },
       })
 
       if (!user) {
-        console.error(`❌ User not found for telegram_id: ${userId}`);
+        globalThis?.logger?.error({ userId }, 'User not found for telegram_id');
         return NextResponse.json({ ok: true });
       }
       
-      console.log(`✅ Found user:`, {
-        id: user.id,
+      globalThis?.logger?.info({ 
+        userId: user.id,
         telegramId: user.telegram_id?.toString(),
         currentDiamonds: user.diamonds,
         currentEnergy: user.energy
-      });
+      }, 'Found user');
 
       // Process payment
       try {
-        console.log('💾 Starting database transaction...');
+        globalThis?.logger?.info({ transactionId: transaction.id }, 'Starting database transaction');
         await prisma.$transaction(async (tx) => {
           // Update transaction
-          console.log(`   Updating transaction ${transaction.id} to COMPLETED`);
           await tx.paymentTransactions.update({
             where: { id: transaction.id },
             data: {
@@ -206,7 +186,7 @@ export async function POST(request: NextRequest) {
               completed_at: new Date(),
             },
           });
-          console.log(`   ✅ Transaction updated successfully`);
+          globalThis?.logger?.info({ transactionId: transaction.id }, 'Transaction updated successfully');
 
           // Update user balance if offer exists
           if (transaction.offer) {
@@ -214,15 +194,13 @@ export async function POST(request: NextRequest) {
             const diamondsToAdd = diamonds || 0;
             const energyToAdd = energy || 0;
             
-            console.log(`   Updating user balance:`, {
+            globalThis?.logger?.info({ 
               userId: user.id,
               diamondsToAdd,
               energyToAdd,
               currentDiamonds: user.diamonds,
-              currentEnergy: user.energy,
-              newDiamonds: (user.diamonds || 0) + diamondsToAdd,
-              newEnergy: (user.energy || 0) + energyToAdd
-            });
+              currentEnergy: user.energy
+            }, 'Updating user balance');
             
             await tx.users.update({
               where: { id: user.id },
@@ -231,15 +209,15 @@ export async function POST(request: NextRequest) {
                 energy: { increment: energyToAdd },
               },
             });
-            console.log(`   ✅ User balance updated successfully`);
+            globalThis?.logger?.info({ userId: user.id }, 'User balance updated successfully');
           } else {
-            console.warn(`   ⚠️  No offer found in transaction, skipping balance update`);
+            globalThis?.logger?.warn({ transactionId: transaction.id }, 'No offer found in transaction, skipping balance update');
           }
         });
-        console.log('✅ Database transaction completed');
+        globalThis?.logger?.info({}, 'Database transaction completed');
 
         // Send confirmation message
-        console.log(`📤 Sending confirmation message to user ${userId}`);
+        globalThis?.logger?.info({ userId }, 'Sending confirmation message to user');
         await sendTelegramMessage(
           userId,
           `✅ Payment Successful!\n\n` +
@@ -251,23 +229,28 @@ export async function POST(request: NextRequest) {
           where: { id: user.id },
           select: { diamonds: true, energy: true }
         });
-        console.log(`✅ Payment ${payment.telegram_payment_charge_id} processed successfully for user ${userId}`);
-        console.log(`   Final balance:`, {
-          diamonds: updatedUser?.diamonds,
-          energy: updatedUser?.energy
-        });
+        globalThis?.logger?.info({ 
+          chargeId: payment.telegram_payment_charge_id,
+          userId,
+          finalBalance: {
+            diamonds: updatedUser?.diamonds,
+            energy: updatedUser?.energy
+          },
+          duration: Date.now() - startTime
+        }, 'Payment processed successfully');
         return NextResponse.json({ ok: true });
       } catch (error: any) {
-        console.error('❌ Error processing payment:', error);
-        console.error('   Error name:', error.name);
-        console.error('   Error message:', error.message);
-        console.error('   Error stack:', error.stack);
+        globalThis?.logger?.error({ 
+          error: error.message,
+          errorName: error.name,
+          stack: error.stack,
+          transactionId: transaction.id
+        }, 'Error processing payment');
         
         // Check if schema error (diamonds/energy fields missing)
         if (error.message?.includes('diamonds') || error.message?.includes('energy')) {
-          console.error('⚠️  Users model missing diamonds/energy fields. Please run migration.');
+          globalThis?.logger?.error({ transactionId: transaction.id }, 'Users model missing diamonds/energy fields. Please run migration.');
           // Still mark as completed to prevent retries
-          console.log(`   Marking transaction ${transaction.id} as completed despite error`);
           await prisma.paymentTransactions.update({
             where: { id: transaction.id },
             data: {
@@ -285,7 +268,7 @@ export async function POST(request: NextRequest) {
 
     // Mandatory /paysupport handler
     if (update.message?.text === '/paysupport') {
-      console.log('🛟 Handling /paysupport command');
+      globalThis?.logger?.info({ userId: update.message.from.id }, 'Handling /paysupport command');
       await sendTelegramMessage(
         update.message.from.id,
         '🛟 For payment support, contact support team'
@@ -293,14 +276,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    console.log('⚠️  Update type not recognized - no pre_checkout_query or successful_payment');
-    console.log('   Update keys:', Object.keys(update));
+    globalThis?.logger?.warn({ updateKeys: Object.keys(update) }, 'Update type not recognized - no pre_checkout_query or successful_payment');
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('❌ Fatal error in payment webhook:', error);
-    console.error('   Error name:', error instanceof Error ? error.name : 'Unknown');
-    console.error('   Error message:', error instanceof Error ? error.message : String(error));
-    console.error('   Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    globalThis?.logger?.error({ 
+      error: error instanceof Error ? error.message : String(error),
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      stack: error instanceof Error ? error.stack : undefined,
+      duration: Date.now() - startTime
+    }, 'Fatal error in payment webhook');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
