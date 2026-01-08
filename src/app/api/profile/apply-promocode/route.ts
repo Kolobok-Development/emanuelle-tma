@@ -5,6 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   const startTime = Date.now();
+  let userId: string | undefined;
+  let promocode: string | undefined;
+  
   try {
     const session = await getServerSession(request);
     if (!session) {
@@ -15,8 +18,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
-    const { promocode } = await request.json();
+    userId = session.user.id;
+    const body = await request.json();
+    promocode = body.promocode;
     
     globalThis?.logger?.info({ userId, promocode }, 'Applying promocode');
 
