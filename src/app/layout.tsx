@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from 'react';
 import type { Metadata } from 'next';
 import { getLocale } from 'next-intl/server';
-import { IBM_Plex_Mono, Space_Mono } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
+import { GoogleTagManager } from '@next/third-parties/google'
 
 import { Root } from '@/components/Root/Root';
 import { I18nProvider } from '@/core/i18n/provider';
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
 
   return (
     <html className={`dark ${ibmPlexMono.variable}`} lang={locale} suppressHydrationWarning >
+      <GoogleTagManager gtmId="G-WHPTP00B17" />
       <body>
         <div className='above-mask'>
            <I18nProvider>
