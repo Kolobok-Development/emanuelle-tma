@@ -3,6 +3,7 @@ import { invoice } from '@tma.js/sdk';
 import type { InvoiceStatus } from '@tma.js/bridge';
 import { useTranslations } from 'next-intl';
 import toast from 'react-hot-toast';
+import { trackPaymentFailed, trackPaymentAbandoned } from '@/lib/analytics';
 
 type PaymentStatus = 'idle' | 'loading' | 'success' | 'error';
 
@@ -98,6 +99,8 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
         case 'failed':
           setStatus('error');
           setError('Payment failed');
+          // Track payment failure
+          trackPaymentFailed(offerId, 'Payment failed');
           toast.error(t('payment.failed'), {
             id: 'payment-failed',
             style: {
@@ -116,6 +119,8 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
         case 'cancelled':
           setStatus('error');
           setError('Payment was cancelled');
+          // Track payment abandonment
+          trackPaymentAbandoned(offerId, 'unknown', 0);
           toast.error(t('payment.cancelled'), {
             id: 'payment-cancelled',
             style: {
@@ -175,6 +180,9 @@ export function useTelegramPayment(): UseTelegramPaymentReturn {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred during payment';
       setError(errorMessage);
       console.error('Payment error:', err);
+      
+      // Track payment failure
+      trackPaymentFailed(offerId, errorMessage);
       
       // Dismiss loading toast if it's still showing
       toast.dismiss('payment-loading');

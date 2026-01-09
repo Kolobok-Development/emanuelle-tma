@@ -11,6 +11,7 @@ import { EnergyOfferCard, EnergyOfferCardSkeleton } from '@/components/EnergyOff
 import { DiamondOfferCard, DiamondOfferCardSkeleton } from '@/components/DiamondOfferCard/DiamondOfferCard';
 import { useAppContext } from '@/context/AppContext';
 import { useTranslations } from 'next-intl';
+import { trackOfferViewed, trackPaymentInitiated, trackPaymentCompleted, trackPaymentFailed } from '@/lib/analytics';
 
 type Offer = {
   id: string;
@@ -42,12 +43,23 @@ export default function BalancePage() {
   const energyOffers = data?.offers.filter((offer) => offer.offer_type === 'ENERGY') || [];
   const diamondOffers = data?.offers.filter((offer) => offer.offer_type === 'DIAMOND') || [];
 
+  // Track offer views when offers load
+  useEffect(() => {
+    if (data?.offers) {
+      data.offers.forEach(offer => {
+        trackOfferViewed(offer.id, offer.offer_type, Number(offer.price_in_usd));
+      });
+    }
+  }, [data?.offers]);
+
   // Create a purchase handler that tracks the offer
   const handlePurchase = async (offerId: string) => {
     // Find the offer being purchased
     const offer = data?.offers.find(o => o.id === offerId);
     if (offer) {
       setPurchasedOffer(offer);
+      // Track payment initiation
+      trackPaymentInitiated(offer.id, offer.offer_type, Number(offer.price_in_usd));
     }
     await purchaseOffer(offerId);
   };
@@ -55,6 +67,17 @@ export default function BalancePage() {
   // Refresh data after successful payment
   useEffect(() => {
     if (status === 'success' && purchasedOffer) {
+      // Track payment completion
+      const transactionId = `${Date.now()}-${purchasedOffer.id}`;
+      trackPaymentCompleted(
+        transactionId,
+        purchasedOffer.id,
+        purchasedOffer.offer_type,
+        Number(purchasedOffer.price_in_usd),
+        purchasedOffer.diamonds,
+        purchasedOffer.energy
+      );
+
       // Refresh offers list
       mutate();
       // Refetch user balance until updated (handles webhook race condition)
@@ -68,6 +91,13 @@ export default function BalancePage() {
       // Clear purchased offer after processing
       setPurchasedOffer(null);
     } else if (status === 'error') {
+      // Track payment failure
+      if (purchasedOffer) {
+        trackPaymentFailed(
+          purchasedOffer.id,
+          paymentError || 'Unknown error'
+        );
+      }
       console.error(paymentError);
       setPurchasedOffer(null);
     } else if (status === 'loading') {

@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { trackCompanionDetailViewed, trackChatInitiated, trackChatInitiationFailed } from '@/lib/analytics';
 
 import { miniApp } from '@tma.js/sdk-react';
 
@@ -48,22 +49,39 @@ export default function CompanionPage() {
       .slice(0, 5);
   }, [companion]);
 
+  // Track when companion detail is viewed
+  React.useEffect(() => {
+    if (companion) {
+      trackCompanionDetailViewed(companion.id, companion.name);
+    }
+  }, [companion]);
+
   const goToChat = async () => {
-    setIsChatInitiated(true)
-      try {
-        await fetch('/api/companion/initiate-chat', {
-          method: 'POST',
-          body: JSON.stringify({
-            companionId,
-          }),
-        });
+    setIsChatInitiated(true);
+    try {
+      await fetch('/api/companion/initiate-chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          companionId,
+        }),
+      });
 
-        miniApp.close()
-
-      } catch (error) {
-        // show error message
+      // Track successful chat initiation
+      if (companion) {
+        trackChatInitiated(companion.id, companion.name);
       }
-  }
+
+      miniApp.close();
+    } catch (error) {
+      // Track failed chat initiation
+      if (companion) {
+        trackChatInitiationFailed(
+          companion.id,
+          error instanceof Error ? error.message : 'Unknown error'
+        );
+      }
+    }
+  };
 
   return (
     <div className="px-4 pb-28">
