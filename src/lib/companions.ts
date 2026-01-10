@@ -109,7 +109,6 @@ export class CompanionService {
           visualAppearance: 'A sophisticated woman with long, flowing auburn hair, piercing green eyes, and an elegant bone structure. She has a refined, intellectual beauty with subtle freckles across her nose. She has a warm, inviting smile that conveys both intelligence and approachability.',
           imageSeed: 'emanuelle_consistent_12345',
           energyCost: 1,
-          isPremium: false,
           isActive: true,
         },
         {
@@ -121,7 +120,6 @@ export class CompanionService {
           visualAppearance: 'A gentle woman with soft brown eyes and shoulder-length chestnut hair that falls in natural waves. She has a kind, nurturing face with a gentle smile and dimples when she laughs. Her skin has a warm, golden undertone and she often wears cozy, comfortable clothing in earth tones. She has an approachable, motherly presence that makes you feel instantly comfortable.',
           imageSeed: 'sophia_consistent_67890',
           energyCost: 1,
-          isPremium: false,
           isActive: true,
         },
         {
@@ -133,7 +131,6 @@ export class CompanionService {
           visualAppearance: 'A vibrant young woman with striking violet-blue eyes and long, wavy silver-blonde hair that catches the light. She has an ethereal, artistic beauty with delicate features and expressive hands that move gracefully when she talks. Her style is bohemian and eclectic - flowing fabrics, colorful accessories, and often paint-stained fingers. She has an infectious, mischievous smile and sparkling eyes full of wonder.',
           imageSeed: 'luna_consistent_11111',
           energyCost: 1,
-          isPremium: false,
           isActive: true,
         },
       ];
@@ -149,7 +146,6 @@ export class CompanionService {
             ...(companionData as any).visualAppearance && { visualAppearance: (companionData as any).visualAppearance },
             ...(companionData as any).imageSeed && { imageSeed: (companionData as any).imageSeed },
             energyCost: companionData.energyCost,
-            isPremium: companionData.isPremium,
             isActive: companionData.isActive,
             updated_at: new Date(),
           },
