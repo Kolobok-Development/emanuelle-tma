@@ -4,7 +4,13 @@ import { CompanionService } from '@/lib/companions';
 import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
 import { UserService } from '@/lib/user';
-import { isMessageProcessed, getPreviousMessageNotProcessedMessage, hasPendingJob } from '../utils';
+import { 
+  isMessageProcessed, 
+  getPreviousMessageNotProcessedMessage, 
+  hasPendingJob,
+  checkRateLimit,
+  getRateLimitExceededMessage
+} from '../utils';
 
 
 export async function handleMessagingWebhook(update: any): Promise<NextResponse> {
@@ -15,21 +21,71 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
       return NextResponse.json({ ok: true });
     }
 
-    if (update.message.message_id) {
-      const alreadyProcessed = await isMessageProcessed(chat.id, update.message.message_id);
-      if (alreadyProcessed) {
-        globalThis?.logger?.debug({ 
-          messageId: update.message.message_id,
-          chatId: chat.id
-        }, 'Message already processed, skipping');
-        return NextResponse.json({ ok: true });
-      }
-    }
-
     const userId = await UserService.getOrCreateUserByTelegramId(
       BigInt(from.id),
       from.username || from.first_name || undefined
     );
+
+    let userLanguage = 'en';
+    try {
+      const user = await UserService.getUserById(userId);
+      if (user?.settings?.language) {
+        userLanguage = user.settings.language;
+      }
+    } catch (error) {
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error),
+        userId
+      }, 'Error getting user language');
+    }
+
+    if (update.message.message_id) {
+      try {
+        const alreadyProcessed = await isMessageProcessed(chat.id, update.message.message_id);
+        if (alreadyProcessed) {
+          globalThis?.logger?.debug({ 
+            messageId: update.message.message_id,
+            chatId: chat.id
+          }, 'Message already processed, skipping');
+          return NextResponse.json({ ok: true });
+        }
+      } catch (error) {
+        const errorMessage = userLanguage === 'ru' 
+          ? 'Сервис временно недоступен. Пожалуйста, попробуйте позже.'
+          : 'Service temporarily unavailable. Please try again later.';
+        await TelegramService.sendMessage(chat.id, errorMessage);
+        globalThis?.logger?.error({ 
+          error: error instanceof Error ? error.message : String(error),
+          chatId: chat.id
+        }, 'Redis unavailable - blocking request');
+        return NextResponse.json({ ok: true });
+      }
+    }
+
+    try {
+      const rateLimitCheck = await checkRateLimit(chat.id);
+      if (!rateLimitCheck.allowed) {
+        const rateLimitMessage = getRateLimitExceededMessage(userLanguage, rateLimitCheck.resetIn);
+        await TelegramService.sendMessage(chat.id, rateLimitMessage);
+        globalThis?.logger?.warn({ 
+          userId: from.id,
+          chatId: chat.id,
+          remaining: rateLimitCheck.remaining,
+          resetIn: rateLimitCheck.resetIn
+        }, 'Rate limit exceeded');
+        return NextResponse.json({ ok: true });
+      }
+    } catch (error) {
+      const errorMessage = userLanguage === 'ru' 
+        ? 'Сервис временно недоступен. Пожалуйста, попробуйте позже.'
+        : 'Service temporarily unavailable. Please try again later.';
+      await TelegramService.sendMessage(chat.id, errorMessage);
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error),
+        chatId: chat.id
+      }, 'Redis unavailable - blocking request');
+      return NextResponse.json({ ok: true });
+    }
 
     let selectedCompanion = await CompanionService.getUserSelectedCompanion(BigInt(from.id));
     
@@ -55,19 +111,6 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
 
     const hasPending = await hasPendingJob(chat.id);
     if (hasPending) {
-      let userLanguage = 'en';
-      try {
-        const user = await UserService.getUserById(userId);
-        if (user?.settings?.language) {
-          userLanguage = user.settings.language;
-        }
-      } catch (error) {
-        globalThis?.logger?.error({ 
-          error: error instanceof Error ? error.message : String(error),
-          userId
-        }, 'Error getting user language');
-      }
-      
       const notificationMessage = getPreviousMessageNotProcessedMessage(userLanguage);
       await TelegramService.sendMessage(chat.id, notificationMessage);
       
