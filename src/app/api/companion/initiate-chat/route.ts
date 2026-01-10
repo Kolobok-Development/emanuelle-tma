@@ -7,6 +7,7 @@ import { CacheService } from "@/lib/cache";
 import { redis } from "@/lib/redis";
 import { getServerSession } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, getRateLimitExceededMessage } from "@/app/api/bot/webhook/utils";
 
 
 function getInitialGreeting(languageCode?: string): string {
@@ -117,7 +118,39 @@ export async function POST(request: NextRequest) {
 
         await CompanionService.selectCompanion(BigInt(telegramChatId), companionId);
 
-        const energyCost = selectedCompanion.energyCost || 1;
+        try {
+            const rateLimitCheck = await checkRateLimit(telegramChatId);
+            if (!rateLimitCheck.allowed) {
+                const userLanguage = user.settings?.language || 'en';
+                const rateLimitMessage = getRateLimitExceededMessage(userLanguage, rateLimitCheck.resetIn);
+                globalThis?.logger?.warn({ 
+                    userId,
+                    chatId: telegramChatId,
+                    remaining: rateLimitCheck.remaining,
+                    resetIn: rateLimitCheck.resetIn
+                }, 'Rate limit exceeded');
+                return NextResponse.json(
+                    { 
+                        error: 'Rate limit exceeded',
+                        message: rateLimitMessage,
+                        resetIn: rateLimitCheck.resetIn
+                    },
+                    { status: 429 }
+                );
+            }
+        } catch (error) {
+            globalThis?.logger?.error({ 
+                error: error instanceof Error ? error.message : String(error),
+                userId,
+                chatId: telegramChatId
+            }, 'Redis unavailable - blocking request');
+            return NextResponse.json(
+                { error: 'Service temporarily unavailable. Please try again later.' },
+                { status: 503 }
+            );
+        }
+
+        const energyCost = Math.max(1, selectedCompanion.energyCost || 1);
         const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
         
         if (!hasEnoughEnergy) {

@@ -10,10 +10,21 @@ export class CacheService {
   private static readonly COMPANION_TTL = 7200; 
   private static readonly USER_TTL = 1800; 
 
+  private static bigIntReplacer(_key: string, value: any): any {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    return value;
+  }
+
+  private static bigIntReviver(_key: string, value: any): any {
+    return value;
+  }
+
   static async get<T>(key: string): Promise<T | null> {
     try {
       const value = await redis.get(key);
-      return value ? JSON.parse(value) : null;
+      return value ? JSON.parse(value, this.bigIntReviver) : null;
     } catch (error) {
       console.error('Cache get error:', error);
       return null;
@@ -22,7 +33,7 @@ export class CacheService {
 
   static async set<T>(key: string, value: T, ttl?: number): Promise<boolean> {
     try {
-      const serialized = JSON.stringify(value);
+      const serialized = JSON.stringify(value, this.bigIntReplacer);
       if (ttl) {
         await redis.setex(key, ttl, serialized);
       } else {
