@@ -69,19 +69,26 @@ model Message {
 }
 
 model AICompanion {
-  id               String               @id @default(uuid())
-  name             String               @unique
-  avatar           String
-  description      String
-  personality      String
-  energyCost       Int                  @default(5)
-  isPremium        Boolean              @default(false)
-  isActive         Boolean              @default(true)
-  created_at       DateTime             @default(now())
-  updated_at       DateTime
+  id     String   @id @default(uuid())
+  name   String   @unique
+  avatar String[]
+
+  publicBio   String
+  description String
+
+  systemPrompt Json
+  personality  String
+
+  energyCost Int     @default(1)
+  isActive   Boolean @default(true)
+
   imageSeed        String?
   visualAppearance String?
-  selections       CompanionSelection[]
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  selections CompanionSelection[]
 }
 
 model CompanionSelection {
