@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import useSWR from 'swr';
 import { useTranslations } from 'next-intl';
@@ -9,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ImageCarousel } from '@/components/ImageCarousel/ImageCarousel';
 import { trackCompanionDetailViewed, trackChatInitiated, trackChatInitiationFailed } from '@/lib/analytics';
 
 import { miniApp } from '@tma.js/sdk-react';
@@ -17,7 +17,7 @@ import { miniApp } from '@tma.js/sdk-react';
 type AICompanion = {
   id: string;
   name: string;
-  avatar: string;
+  avatar: string[];
   description: string;
   personality: string;
 };
@@ -102,18 +102,11 @@ export default function CompanionPage() {
           <div className="w-full">
             {/* Image */}
             <div className="relative w-full h-[350px]">
-              {companion?.avatar ? (
-                <Image
-                  src={companion.avatar}
-                  alt={companion.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 600px"
-                  priority
-                />
-              ) : (
-                <div className="w-full h-full bg-border" />
-              )}
+              <ImageCarousel
+                images={companion?.avatar || []}
+                alt={companion?.name || 'Companion'}
+                className="rounded-t-3xl"
+              />
             </div>
 
             {/* Tags row */}
