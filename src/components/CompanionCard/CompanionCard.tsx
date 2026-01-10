@@ -22,9 +22,9 @@ export function CompanionCard({ companion, onClick }: { companion: AICompanion; 
           style={{ borderColor: 'rgba(236, 72, 153, 0.7)' }}
         >
           {/* Background Image */}
-          {!imageError && companion.avatar ? (
+          {!imageError && companion.avatar && companion.avatar.length > 0 ? (
             <img
-              src={companion.avatar}
+              src={companion.avatar[0]}
               alt={companion.name}
               className="absolute inset-0 m-0 h-full w-full rounded-none object-cover"
               onError={() => setImageError(true)}
