@@ -51,9 +51,7 @@ const aiResponseWorker = new Worker(
     const {
       chatId,
       companionName,
-      companionPersonality,
-      companionDescription,
-      username,
+      companionId,
       dbChatId,
     } = job.data;
 
@@ -90,10 +88,7 @@ const aiResponseWorker = new Worker(
 
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
-        companionName,
-        companionPersonality,
-        "",
-        username
+        companionId
       );
 
       if (aiResponse.error) {

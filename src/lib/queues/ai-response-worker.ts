@@ -45,7 +45,7 @@ console.log('✅ Environment variables loaded successfully');
 const aiResponseWorker = new Worker(
   'ai-response',
   async (job: Job<AIResponseJobData>) => {
-    const { chatId, companionName, companionPersonality, companionDescription, username, dbChatId, companionId } = job.data;
+    const { chatId, companionName, dbChatId, companionId } = job.data;
     const jobStartTime = Date.now();
     const waitTime = job.timestamp ? (Date.now() - job.timestamp) / 1000 : 0;
     
@@ -70,10 +70,6 @@ const aiResponseWorker = new Worker(
       const aiStartTime = Date.now();
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
-        companionName,
-        companionPersonality,
-        companionDescription,
-        username,
         companionId
       );
       const aiDuration = (Date.now() - aiStartTime) / 1000;
