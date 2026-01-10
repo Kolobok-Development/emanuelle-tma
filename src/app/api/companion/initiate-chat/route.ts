@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
 
         await CompanionService.selectCompanion(BigInt(telegramChatId), companionId);
 
-        const energyCost = selectedCompanion.energyCost || 5;
+        const energyCost = selectedCompanion.energyCost || 1;
         const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
         
         if (!hasEnoughEnergy) {

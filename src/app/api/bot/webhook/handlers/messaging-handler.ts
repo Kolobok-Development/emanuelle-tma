@@ -4,7 +4,7 @@ import { CompanionService } from '@/lib/companions';
 import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
 import { UserService } from '@/lib/user';
-import { isMessageProcessed } from '../utils';
+import { isMessageProcessed, getPreviousMessageNotProcessedMessage, hasPendingJob } from '../utils';
 
 
 export async function handleMessagingWebhook(update: any): Promise<NextResponse> {
@@ -53,6 +53,32 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
       }
     }
 
+    const hasPending = await hasPendingJob(chat.id);
+    if (hasPending) {
+      let userLanguage = 'en';
+      try {
+        const user = await UserService.getUserById(userId);
+        if (user?.settings?.language) {
+          userLanguage = user.settings.language;
+        }
+      } catch (error) {
+        globalThis?.logger?.error({ 
+          error: error instanceof Error ? error.message : String(error),
+          userId
+        }, 'Error getting user language');
+      }
+      
+      const notificationMessage = getPreviousMessageNotProcessedMessage(userLanguage);
+      await TelegramService.sendMessage(chat.id, notificationMessage);
+      
+      globalThis?.logger?.info({ 
+        userId: from.id,
+        chatId: chat.id
+      }, 'Blocked message - previous message still processing');
+      
+      return NextResponse.json({ ok: true });
+    }
+
     let dbChatId: string;
     try {
       dbChatId = await ConversationService.getOrCreateActiveChat(userId);
@@ -73,7 +99,7 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
       }, 'Error saving user message');
     }
     
-    const energyCost = selectedCompanion.energyCost || 5;
+    const energyCost = selectedCompanion.energyCost || 1;
     const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
     
     if (!hasEnoughEnergy) {
