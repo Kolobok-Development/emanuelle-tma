@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const energyCost = selectedCompanion.energyCost || 1;
+        const energyCost = Math.max(1, selectedCompanion.energyCost || 1);
         const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
         
         if (!hasEnoughEnergy) {
