@@ -32,6 +32,7 @@ export async function POST(request: NextRequest) {
 
     const parsedInitData = parse(initData);
     const telegramUser = parsedInitData.user;
+    const language = telegramUser?.language_code || 'en';
 
     if (!telegramUser) {
       globalThis?.logger?.warn({}, 'Telegram user not found in initData');
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
           settings: {
             create: {
               tone: "friendly",
-              language: "en",
+              language: language,
             },
           },
         },
