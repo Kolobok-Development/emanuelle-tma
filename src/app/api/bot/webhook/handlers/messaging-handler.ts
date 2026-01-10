@@ -4,6 +4,7 @@ import { CompanionService } from '@/lib/companions';
 import { ConversationService } from '@/lib/conversation';
 import { TelegramService } from '@/lib/telegram';
 import { UserService } from '@/lib/user';
+import { redis } from '@/lib/redis';
 import { 
   isMessageProcessed, 
   getPreviousMessageNotProcessedMessage, 
@@ -64,25 +65,48 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
 
     try {
       const rateLimitCheck = await checkRateLimit(chat.id);
+      globalThis?.logger?.debug({ 
+        chatId: chat.id,
+        allowed: rateLimitCheck.allowed,
+        remaining: rateLimitCheck.remaining,
+        resetIn: rateLimitCheck.resetIn
+      }, 'Rate limit check completed');
+      
       if (!rateLimitCheck.allowed) {
         const rateLimitMessage = getRateLimitExceededMessage(userLanguage, rateLimitCheck.resetIn);
-        await TelegramService.sendMessage(chat.id, rateLimitMessage);
+        try {
+          await TelegramService.sendMessage(chat.id, rateLimitMessage);
+        } catch (sendError) {
+          globalThis?.logger?.error({ 
+            error: sendError instanceof Error ? sendError.message : String(sendError),
+            chatId: chat.id
+          }, 'Failed to send rate limit message');
+        }
         globalThis?.logger?.warn({ 
           userId: from.id,
           chatId: chat.id,
           remaining: rateLimitCheck.remaining,
           resetIn: rateLimitCheck.resetIn
-        }, 'Rate limit exceeded');
+        }, 'Rate limit exceeded - blocking request');
         return NextResponse.json({ ok: true });
       }
     } catch (error) {
       const errorMessage = userLanguage === 'ru' 
         ? 'Сервис временно недоступен. Пожалуйста, попробуйте позже.'
         : 'Service temporarily unavailable. Please try again later.';
-      await TelegramService.sendMessage(chat.id, errorMessage);
+      try {
+        await TelegramService.sendMessage(chat.id, errorMessage);
+      } catch (sendError) {
+        globalThis?.logger?.error({ 
+          error: sendError instanceof Error ? sendError.message : String(sendError),
+          chatId: chat.id
+        }, 'Failed to send Redis error message');
+      }
       globalThis?.logger?.error({ 
         error: error instanceof Error ? error.message : String(error),
-        chatId: chat.id
+        errorStack: error instanceof Error ? error.stack : undefined,
+        chatId: chat.id,
+        redisStatus: redis.status
       }, 'Redis unavailable - blocking request');
       return NextResponse.json({ ok: true });
     }

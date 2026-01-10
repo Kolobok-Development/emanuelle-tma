@@ -9,9 +9,19 @@ export const RATE_LIMIT_MAX_REQUESTS = 10;
 
 async function checkRedisAvailability(): Promise<void> {
   try {
-    const status = redis.status;
-    if (status !== 'ready' && status !== 'connect') {
-      await redis.ping();
+    if (redis.status === 'end' || redis.status === 'close' || redis.status === 'wait') {
+      await redis.connect();
+    }
+    
+    const pong = await Promise.race([
+      redis.ping(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Redis ping timeout')), 2000)
+      )
+    ]);
+    
+    if (pong !== 'PONG') {
+      throw new Error('Redis ping failed');
     }
   } catch (error) {
     globalThis?.logger?.error({ 
@@ -44,24 +54,53 @@ export async function checkRateLimit(chatId: number): Promise<{ allowed: boolean
   
   try {
     const key = `rate_limit:${chatId}`;
-    const current = await redis.incr(key);
+    
+    const current = await Promise.race([
+      redis.incr(key),
+      new Promise<number>((_, reject) => 
+        setTimeout(() => reject(new Error('Redis INCR timeout')), 2000)
+      )
+    ]);
+
+    console.log("current: ", current)
     
     if (current === 1) {
-      await redis.expire(key, RATE_LIMIT_WINDOW);
+      await Promise.race([
+        redis.expire(key, RATE_LIMIT_WINDOW),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Redis EXPIRE timeout')), 2000)
+        )
+      ]);
     }
     
-    const ttl = await redis.ttl(key);
-    const remaining = Math.max(0, RATE_LIMIT_MAX_REQUESTS - current);
+    const ttl = await Promise.race([
+      redis.ttl(key),
+      new Promise<number>((_, reject) => 
+        setTimeout(() => reject(new Error('Redis TTL timeout')), 2000)
+      )
+    ]);
     
+    const remaining = Math.max(0, RATE_LIMIT_MAX_REQUESTS - current);
+    const allowed = current <= RATE_LIMIT_MAX_REQUESTS;
+    
+    globalThis?.logger?.debug({ 
+      chatId,
+      current,
+      allowed,
+      remaining,
+      resetIn: ttl
+    }, 'Rate limit check result');
+
     return {
-      allowed: current <= RATE_LIMIT_MAX_REQUESTS,
+      allowed,
       remaining,
       resetIn: ttl
     };
   } catch (error) {
     globalThis?.logger?.error({ 
       error: error instanceof Error ? error.message : String(error),
-      chatId
+      chatId,
+      redisStatus: redis.status
     }, 'Error checking rate limit');
     throw new Error('Service temporarily unavailable. Please try again later.');
   }
