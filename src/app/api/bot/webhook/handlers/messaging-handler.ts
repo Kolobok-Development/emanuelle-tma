@@ -99,7 +99,7 @@ export async function handleMessagingWebhook(update: any): Promise<NextResponse>
       }, 'Error saving user message');
     }
     
-    const energyCost = selectedCompanion.energyCost || 5;
+    const energyCost = selectedCompanion.energyCost || 1;
     const hasEnoughEnergy = await UserService.deductEnergy(userId, energyCost);
     
     if (!hasEnoughEnergy) {
