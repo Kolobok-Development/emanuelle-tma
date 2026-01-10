@@ -46,6 +46,7 @@ export class ConversationService {
         return await prisma.message.findMany({
           where: { chat_id: chatId },
           orderBy: { created_at: 'desc' },
+          take: 20,
           select: {
             role: true,
             content: true,
@@ -72,7 +73,7 @@ export class ConversationService {
         totalTokens += msgTokens;
       }
       
-      console.log(`Selected ${selectedMessages.length} messages with ~${totalTokens} tokens (max: ${maxTokens})`);
+      console.log(`Selected ${selectedMessages.length} messages from last 15 with ~${totalTokens} tokens (max: ${maxTokens})`);
       
       return selectedMessages;
     } catch (error: any) {
