@@ -99,7 +99,6 @@ export class AIService {
         console.error('AI returned empty or whitespace-only response', {
           finishReason: result.finishReason,
           usage: result.usage,
-          rawResult: JSON.stringify(result).substring(0, 500)
         });
         return {
           error: `AI returned empty response. Finish reason: ${result.finishReason || 'unknown'}`,
@@ -116,9 +115,6 @@ export class AIService {
         name: error.name,
         status: error.status,
         statusCode: error.statusCode,
-        cause: error.cause,
-        stack: error.stack?.substring(0, 500),
-        fullError: JSON.stringify(error, Object.getOwnPropertyNames(error), 2).substring(0, 1000)
       });
       
       if (error.message?.includes('Circuit breaker is OPEN')) {
