@@ -169,7 +169,7 @@ export class AIService {
       },
     });
 
-    const systemPrompt = companion?.systemPrompt?.toString() || "";
+    const systemPrompt = JSON.stringify(companion?.systemPrompt) || "";
 
     const systemMessage: AIMessage = {
       role: 'system',
