@@ -57,7 +57,6 @@ export class ImageGenerationService {
         return result.data;
       });
 
-      console.log('Image generation response received:', response);
 
       if (response.data && response.data.length > 0 && response.data[0].url) {
         return {

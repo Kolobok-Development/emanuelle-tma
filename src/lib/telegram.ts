@@ -62,13 +62,13 @@ export class TelegramService {
       });
       
       if (!data.ok) {
-        console.error('Failed to send Telegram message:', data);
+        console.error('Failed to send Telegram message');
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
       return data;
     } catch (error: any) {
-      console.error('Error sending Telegram message:', error);
+      console.error('Error sending Telegram message');
       
       if (error.message?.includes('Circuit breaker is OPEN')) {
         console.warn('Telegram API circuit breaker is OPEN - service temporarily unavailable');
@@ -106,7 +106,6 @@ export class TelegramService {
       });
       
       if (!data.ok) {
-        console.error('Failed to send chat action:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
       }
 
