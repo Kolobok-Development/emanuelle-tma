@@ -110,12 +110,12 @@ export class AIService {
         tokens_used: result.usage?.totalTokens || 0,
       };
     } catch (error: any) {
-      console.error('AI service error details:', {
+      globalThis?.logger?.error({
         message: error.message,
         name: error.name,
         status: error.status,
         statusCode: error.statusCode,
-      });
+      }, 'AI service error');
       
       if (error.message?.includes('Circuit breaker is OPEN')) {
         return {

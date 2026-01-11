@@ -103,7 +103,7 @@ export class ImageGenerationService {
       
       return {
         status: 'error',
-        error: error.response?.data?.error?.message || error.message || 'Image generation service unavailable'
+        error: 'Image generation service temporarily unavailable. Please try again later.'
       };
     }
   }
