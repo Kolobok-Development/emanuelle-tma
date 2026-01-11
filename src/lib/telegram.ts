@@ -111,7 +111,9 @@ export class TelegramService {
 
       return data;
     } catch (error: any) {
-      console.error('Error sending chat action:', error);
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Error sending chat action');
       
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return null;
@@ -155,7 +157,9 @@ export class TelegramService {
 
       return data;
     } catch (error: any) {
-      console.error('Error answering callback query:', error);
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Error answering callback query');
       
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return null;
@@ -196,7 +200,9 @@ export class TelegramService {
 
       return data;
     } catch (error: any) {
-      console.error('Error sending photo:', error);
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Error sending photo');
       
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
@@ -246,7 +252,9 @@ export class TelegramService {
 
       return data;
     } catch (error: any) {
-      console.error('Error sending photo from URL:', error);
+      globalThis?.logger?.error({ 
+        error: error instanceof Error ? error.message : String(error)
+      }, 'Error sending photo from URL');
       
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
