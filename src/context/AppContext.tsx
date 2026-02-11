@@ -1,7 +1,28 @@
 "use client";
 import type { Users, Session } from "@prisma/client";
 import { useRawInitData } from "@tma.js/sdk-react";
+import { useRouter } from "next/navigation";
 import { useContext, createContext, useState, useEffect, useRef } from "react";
+
+import { setLocale } from "@/core/i18n/locale";
+import { locales } from "@/core/i18n/config";
+
+/** User shape returned by API (includes settings) */
+type UserWithSettings = Users & { settings?: { language?: string } | null };
+
+/** Apply saved language from DB to cookie when user has a valid locale. Returns true if locale was applied. */
+async function applyUserLocale(user: UserWithSettings | null): Promise<boolean> {
+  const lang = user?.settings?.language;
+  if (!lang || typeof lang !== "string") return false;
+  if (!locales.includes(lang as (typeof locales)[number])) return false;
+  try {
+    await setLocale(lang);
+    return true;
+  } catch (err) {
+    console.warn("Failed to apply user locale:", err);
+    return false;
+  }
+}
 
 interface AppContextType {
   user: Users | null;
@@ -20,6 +41,7 @@ const MAX_RETRY_ATTEMPTS = 3;
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [user, setUser] = useState<Users | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,6 +90,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setUser(data.user);
           setSession(data.session);
           setSessionStatus("valid");
+          const localeApplied = await applyUserLocale(data.user);
+          if (localeApplied) router.refresh();
           return data.user;
         }
       }
@@ -164,6 +188,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setSessionStatus("valid");
       retryCount.current = 0;
+      if (data.user) {
+        const localeApplied = await applyUserLocale(data.user);
+        if (localeApplied) router.refresh();
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Authentication failed";
@@ -209,6 +237,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setUser(data.user);
             setSession(data.session);
             setSessionStatus("valid");
+            const localeApplied = await applyUserLocale(data.user);
+            if (localeApplied) router.refresh();
             console.log("Existing valid session found");
           } else {
             setSessionStatus("invalid");

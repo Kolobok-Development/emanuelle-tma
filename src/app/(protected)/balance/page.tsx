@@ -113,7 +113,7 @@ export default function BalancePage() {
 
         <TabsContent value="energy" className="mt-5 w-full">
           <section className="grid w-full grid-cols-2 gap-4">
-            {!isLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <EnergyOfferCardSkeleton key={index} />
               ))
@@ -129,7 +129,7 @@ export default function BalancePage() {
 
         <TabsContent value="combo" className="mt-5 w-full">
           <section className="w-full space-y-4">
-            {!isLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))
@@ -145,7 +145,7 @@ export default function BalancePage() {
 
         <TabsContent value="diamonds" className="mt-5 w-full">
           <section className="grid w-full grid-cols-2 gap-4">
-            {!isLoading ? (
+            {isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <DiamondOfferCardSkeleton key={index} />
               ))
