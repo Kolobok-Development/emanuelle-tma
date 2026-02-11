@@ -71,16 +71,17 @@ model Message {
 model AICompanion {
   id               String               @id @default(uuid())
   name             String               @unique
-  avatar           String
   description      String
   personality      String
-  energyCost       Int                  @default(5)
-  isPremium        Boolean              @default(false)
+  energyCost       Int                  @default(1)
   isActive         Boolean              @default(true)
   created_at       DateTime             @default(now())
   updated_at       DateTime
   imageSeed        String?
   visualAppearance String?
+  publicBio        String
+  systemPrompt     Json
+  avatar           String[]
   selections       CompanionSelection[]
 }
 
@@ -139,7 +140,7 @@ model Promocodes {
   updated_at  DateTime         @updatedAt
   is_active   Boolean          @default(true)
   expires_at  DateTime?
-  usage_limit Int? // null means unlimited
+  usage_limit Int?
   usages      PromocodeUsage[]
 
   @@index([code])
@@ -147,15 +148,14 @@ model Promocodes {
 }
 
 model PromocodeUsage {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   promocode_id String
   user_id      String
-  used_at      DateTime @default(now())
+  used_at      DateTime   @default(now())
+  promocode    Promocodes @relation(fields: [promocode_id], references: [id], onDelete: Cascade)
+  user         Users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  promocode Promocodes @relation(fields: [promocode_id], references: [id], onDelete: Cascade)
-  user      Users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([promocode_id, user_id]) // Prevent duplicate usage per user
+  @@unique([promocode_id, user_id])
   @@index([promocode_id])
   @@index([user_id])
   @@index([used_at])

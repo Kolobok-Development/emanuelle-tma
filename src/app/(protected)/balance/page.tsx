@@ -84,13 +84,13 @@ export default function BalancePage() {
   }
 
   return (
-    <div className="relative flex flex-1 flex-col items-center px-4 pb-5">
+    <div className="relative flex flex-1 flex-col items-center min-w-0 px-4 pb-5">
       {status === 'loading' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" />
       )}
       
-      <Tabs defaultValue="combo" className="relative -top-4 w-[85%] max-w-md">
-        <TabsList className="mx-auto grid h-auto w-full grid-cols-3 rounded-xl border bg-border p-1">
+      <Tabs defaultValue="combo" className="relative -top-4 flex w-[85%] max-w-md flex-col">
+        <TabsList className="mx-auto grid h-auto w-full min-w-0 grid-cols-3 rounded-xl border bg-border p-1">
           <TabsTrigger
             className="rounded-md px-4 py-2 text-base font-semibold text-white/70 transition-colors data-[state=active]:bg-gradient-pink-purple data-[state=active]:text-white data-[state=active]:shadow-[0_0_20px_rgba(255,108,240,0.55)]"
             value="energy"
@@ -111,9 +111,9 @@ export default function BalancePage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="energy" className="mt-5">
-          <section className="grid grid-cols-2 gap-4">
-            {isLoading ? (
+        <TabsContent value="energy" className="mt-5 w-full">
+          <section className="grid w-full grid-cols-2 gap-4">
+            {!isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <EnergyOfferCardSkeleton key={index} />
               ))
@@ -127,9 +127,9 @@ export default function BalancePage() {
           </section>
         </TabsContent>
 
-        <TabsContent value="combo" className="mt-5 ">
-          <section className="space-y-4">
-            {isLoading ? (
+        <TabsContent value="combo" className="mt-5 w-full">
+          <section className="w-full space-y-4">
+            {!isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <OfferCardSkeleton key={index} />
               ))
@@ -143,9 +143,9 @@ export default function BalancePage() {
           </section>
         </TabsContent>
 
-        <TabsContent value="diamonds" className="mt-5">
-          <section className="grid grid-cols-2 gap-4">
-            {isLoading ? (
+        <TabsContent value="diamonds" className="mt-5 w-full">
+          <section className="grid w-full grid-cols-2 gap-4">
+            {!isLoading ? (
               Array.from({ length: 4 }).map((_, index) => (
                 <DiamondOfferCardSkeleton key={index} />
               ))
