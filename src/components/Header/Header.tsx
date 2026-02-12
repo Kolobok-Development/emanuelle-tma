@@ -77,6 +77,7 @@ export const Header = () => {
         </div>
         
         <Button
+          id="onboarding-topup"
           type="button"
           onClick={() => {
             if (pathname !== '/balance') {

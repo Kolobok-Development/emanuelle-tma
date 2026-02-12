@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
               diamonds: session.user.diamonds,
               energy: session.user.energy,
               gender: session.user.gender,
+              onboarding_completed_at: session.user.onboarding_completed_at?.toISOString() ?? null,
             },
             session: {
               expires_at: session.expires_at

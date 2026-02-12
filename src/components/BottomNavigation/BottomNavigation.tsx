@@ -37,6 +37,7 @@ export const BottomNavigation = () => {
       </Link>
 
       <Link
+        id="onboarding-profile"
         href="/profile"
         className={`flex items-center justify-center text-white  w-1/5 p-4  rounded-xl transition-all duration-200 hover:text-white ${
           pathname === "/profile" ? "bg-gradient-pink-purple text-white shadow-lg" : ""

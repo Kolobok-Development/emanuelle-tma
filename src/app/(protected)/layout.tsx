@@ -4,6 +4,7 @@ import { Page } from "@/components/Page";
 import { ReactNode, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { BalanceHeader } from "@/components/Header/BalanceHeader";
+import { OnboardingTour } from "@/components/OnboardingTour/OnboardingTour";
 
 type ProtectedLayoutProps = {
     children: ReactNode;
@@ -34,12 +35,14 @@ export default function ProtectedLayout({ children }: ProtectedLayoutProps) {
     const showHeader = pageConfig.showHeader ?? true;
 
     return (
-        <Page
-            back={shouldShowBack}
-            header={pageConfig.header}
-            showHeader={showHeader}
-        >
-            {children}
-        </Page>
+        <OnboardingTour>
+            <Page
+                back={shouldShowBack}
+                header={pageConfig.header}
+                showHeader={showHeader}
+            >
+                {children}
+            </Page>
+        </OnboardingTour>
     );
 }

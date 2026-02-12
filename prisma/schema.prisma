@@ -10,20 +10,21 @@ datasource db {
 }
 
 model Users {
-  id                    String                @id @default(uuid())
-  telegram_id           BigInt                @unique
-  username              String?
-  gender                String?
-  isTermsPolicyAccepted Boolean               @default(false)
-  created_at            DateTime              @default(now())
-  updated_at            DateTime              @updatedAt
-  diamonds              Int                   @default(0)
-  energy                Int                   @default(0)
-  chats                 Chat[]
-  sessions              Session[]
-  settings              UserSettings?
-  payment_transactions  PaymentTransactions[]
-  promocode_usages      PromocodeUsage[]
+  id                     String                @id @default(uuid())
+  telegram_id            BigInt                @unique
+  username               String?
+  gender                 String?
+  isTermsPolicyAccepted  Boolean               @default(false)
+  onboarding_completed_at DateTime?
+  created_at             DateTime              @default(now())
+  updated_at             DateTime              @updatedAt
+  diamonds               Int                   @default(0)
+  energy                 Int                   @default(0)
+  chats                  Chat[]
+  sessions               Session[]
+  settings               UserSettings?
+  payment_transactions   PaymentTransactions[]
+  promocode_usages       PromocodeUsage[]
 }
 
 model UserSettings {

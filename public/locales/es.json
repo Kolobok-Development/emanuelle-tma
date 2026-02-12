@@ -17,6 +17,27 @@
   "dashboard": {
     "noImage": "Sin imagen"
   },
+  "onboarding": {
+    "companions": {
+      "title": "Elige uno 💬",
+      "content": "Toca la tarjeta"
+    },
+    "chat": {
+      "title": "Ir al chat 📱",
+      "content": "Toca aquí → se abre en Telegram"
+    },
+    "topup": {
+      "title": "Recargar ➕",
+      "content": "Toca + para más ✨"
+    },
+    "profile": {
+      "title": "Promo e idioma 👤",
+      "content": "Recompensas 🎁 e idioma 🌐"
+    },
+    "skip": "Omitir",
+    "next": "Siguiente",
+    "done": "Listo"
+  },
   "companion": {
     "title": "Compañero",
     "description": "Descripción",

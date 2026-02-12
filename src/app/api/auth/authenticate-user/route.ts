@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
         diamonds: user.diamonds,
         energy: user.energy,
         gender: user.gender,
+        onboarding_completed_at: user.onboarding_completed_at?.toISOString() ?? null,
       },
     });
 

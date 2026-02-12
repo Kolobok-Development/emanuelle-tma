@@ -126,9 +126,14 @@ export default function CompanionPage() {
         </CardContent>
       </Card>
        <div className="absolute left-1/2 transform -translate-x-1/2 -mt-5">
-             <Button disabled={isChatInitiated} className="bg-gradient-pink-purple text-white font-bold px-6 py-6 h-12 rounded-xl max-w-md" onClick={goToChat}>
-               {t('companion.goToChat')}
-             </Button>
+             <Button
+              id="onboarding-chat-button"
+              disabled={isChatInitiated}
+              className="bg-gradient-pink-purple text-white font-bold px-6 py-6 h-12 rounded-xl max-w-md"
+              onClick={goToChat}
+            >
+              {t('companion.goToChat')}
+            </Button>
        </div>
     </div>
   );

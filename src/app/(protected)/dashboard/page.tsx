@@ -16,20 +16,21 @@ export default function Dashboard() {
 
     return (
         <div className="flex flex-1 flex-col bg-transparent p-4 items-center">
-            <div className="grid grid-cols-2 gap-7">
+            <div id="onboarding-companions" className="grid grid-cols-2 gap-7">
                 {isLoading ? (
                     // Show skeleton cards while loading
                     Array.from({ length: 5 }).map((_, index) => (
                         <CompanionCardSkeleton key={index} />
                     ))
                 ) : (
-                    // Show actual data when loaded
-                    data?.companions?.map((companion) => (
-                        <CompanionCard
-                            key={companion.id}
-                            companion={companion}
-                            onClick={() => router.push(`/companion/${companion.id}`)}
-                        />
+                    // Show actual data when loaded; first card is onboarding target
+                    data?.companions?.map((companion, index) => (
+                        <div key={companion.id} id={index === 0 ? 'onboarding-first-companion' : undefined}>
+                            <CompanionCard
+                                companion={companion}
+                                onClick={() => router.push(`/companion/${companion.id}`)}
+                            />
+                        </div>
                     ))
                 )}
             </div>

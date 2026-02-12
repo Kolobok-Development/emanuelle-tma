@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin("./src/core/i18n/i18n.ts");
 const nextConfig: NextConfig = {
   output: 'standalone',
   reactStrictMode: false,
+  transpilePackages: ['nextstepjs', 'motion'],
   allowedDevOrigins: [
     "https://t.me",
     "https://web.telegram.org",

@@ -17,6 +17,27 @@
   "dashboard": {
     "noImage": "Нет изображения"
   },
+  "onboarding": {
+    "companions": {
+      "title": "Выбери 💬",
+      "content": "Нажми на карточку"
+    },
+    "chat": {
+      "title": "В чат 📱",
+      "content": "Нажми → откроется в Telegram"
+    },
+    "topup": {
+      "title": "Пополнить ➕",
+      "content": "Нажми + за бонусами ✨"
+    },
+    "profile": {
+      "title": "Промо и язык 👤",
+      "content": "Награды 🎁 и язык 🌐"
+    },
+    "skip": "Пропустить",
+    "next": "Далее",
+    "done": "Готово"
+  },
   "companion": {
     "title": "Компаньон",
     "description": "Описание",
