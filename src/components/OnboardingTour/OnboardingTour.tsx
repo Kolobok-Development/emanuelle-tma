@@ -36,11 +36,11 @@ function OnboardingTourInner({ children }: { children: ReactNode }) {
         tour: 'onboarding',
         steps: [
           {
-            icon: '💬',
+            icon: '😈',
             title: t('companions.title'),
             content: t('companions.content'),
             selector: '#onboarding-first-companion',
-            side: 'bottom',
+            side: 'bottom-left',
             showControls: true,
             showSkip: true,
             pointerPadding: 10,
@@ -48,7 +48,7 @@ function OnboardingTourInner({ children }: { children: ReactNode }) {
             nextRoute: companionRoute,
           },
           {
-            icon: '📱',
+            icon: '💌',
             title: t('chat.title'),
             content: t('chat.content'),
             selector: '#onboarding-chat-button',
@@ -60,7 +60,7 @@ function OnboardingTourInner({ children }: { children: ReactNode }) {
             prevRoute: '/dashboard',
           },
           {
-            icon: '➕',
+            icon: '💎',
             title: t('topup.title'),
             content: t('topup.content'),
             selector: '#onboarding-topup',
@@ -100,6 +100,16 @@ function OnboardingTourInner({ children }: { children: ReactNode }) {
     }
   }, [refetchUser]);
 
+  const handleStepChange = useCallback((stepIndex: number) => {
+    if (stepIndex !== 1) return;
+    setTimeout(() => {
+      document.getElementById('onboarding-chat-button')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 350);
+  }, []);
+
   useEffect(() => {
     if (pathname !== '/dashboard') return;
     if (!firstCompanionId) return;
@@ -118,6 +128,7 @@ function OnboardingTourInner({ children }: { children: ReactNode }) {
       showNextStep={showTour}
       onComplete={markSeen}
       onSkip={markSeen}
+      onStepChange={handleStepChange}
       cardComponent={OnboardingCard}
       shadowRgb="100, 80, 180"
       shadowOpacity="0.85"

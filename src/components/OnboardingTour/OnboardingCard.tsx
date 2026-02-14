@@ -24,7 +24,7 @@ export function OnboardingCard({
     <div
       className="relative flex flex-col rounded-2xl border-2 border-primary/50 bg-muted-dark shadow-xl"
       style={{
-        maxWidth: 'min(340px, calc(100vw - 1.5rem))',
+        maxWidth: 'min(380px, calc(100vw - 1rem))',
         padding: '12px 14px',
         paddingTop: '14px',
       }}

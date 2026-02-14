@@ -19,20 +19,20 @@
   },
   "onboarding": {
     "companions": {
-      "title": "Elige uno 💬",
-      "content": "Toca la tarjeta"
+      "title": "Elígela",
+      "content": "Toca la tarjeta — ya se sonroja solo de pensar en ti"
     },
     "chat": {
-      "title": "Ir al chat 📱",
-      "content": "Toca aquí → se abre en Telegram"
+      "title": "Escríbele",
+      "content": "Se abrirá solo contigo… cuanto más largo — más ardiente"
     },
     "topup": {
-      "title": "Recargar ➕",
-      "content": "Toca + para más ✨"
+      "title": "Recarga saldo",
+      "content": "Más energía — más pasión"
     },
     "profile": {
-      "title": "Promo e idioma 👤",
-      "content": "Recompensas 🎁 e idioma 🌐"
+      "title": "Ajustes",
+      "content": "Códigos promo e idioma aquí"
     },
     "skip": "Omitir",
     "next": "Siguiente",
@@ -155,4 +155,3 @@
     }
   }
 }
-

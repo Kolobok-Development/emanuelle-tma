@@ -19,20 +19,20 @@
   },
   "onboarding": {
     "companions": {
-      "title": "Pick one 💬",
-      "content": "Tap card to open"
+      "title": "Choose her",
+      "content": "Tap the card — she's already blushing at the thought of you"
     },
     "chat": {
-      "title": "Go to chat 📱",
-      "content": "Tap here → opens in Telegram"
+      "title": "Message her",
+      "content": "She'll open up only to you… the longer — the hotter"
     },
     "topup": {
-      "title": "Top up ➕",
-      "content": "Tap + for more ✨"
+      "title": "Top up balance",
+      "content": "More energy — more passion"
     },
     "profile": {
-      "title": "Promo & language 👤",
-      "content": "Rewards 🎁 + language 🌐"
+      "title": "Settings",
+      "content": "Promo codes and language here"
     },
     "skip": "Skip",
     "next": "Next",
