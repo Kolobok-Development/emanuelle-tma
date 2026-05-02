@@ -1,6 +1,6 @@
 "use client";
-import type { Users, Session } from "@prisma/client";
-import { useRawInitData } from "@tma.js/sdk-react";
+import type { Users } from "@prisma/client";
+import { useRawInitData, retrieveLaunchParams } from "@tma.js/sdk-react";
 import { useRouter } from "next/navigation";
 import { useContext, createContext, useState, useEffect, useRef } from "react";
 
@@ -9,6 +9,36 @@ import { locales } from "@/core/i18n/config";
 
 /** User shape returned by API (includes settings) */
 type UserWithSettings = Users & { settings?: { language?: string } | null };
+
+/** Session fields returned by auth APIs (JWT cookie is httpOnly). */
+export type ClientSession = {
+  token?: string;
+  expires_at: string | Date;
+  app_scope?: "hub" | "dedicated";
+  locked_companion_id?: string | null;
+};
+
+function resolveAuthContext(): {
+  authContext: "hub" | "dedicated";
+  companionId?: string;
+} {
+  let startParam: string | undefined;
+  try {
+    startParam = retrieveLaunchParams().tgWebAppStartParam;
+  } catch {
+    startParam = undefined;
+  }
+  let pathCompanion: string | undefined;
+  if (typeof window !== "undefined") {
+    const m = window.location.pathname.match(/^\/companion\/([^/]+)/);
+    pathCompanion = m?.[1];
+  }
+  const companionId = startParam || pathCompanion;
+  if (companionId) {
+    return { authContext: "dedicated", companionId };
+  }
+  return { authContext: "hub" };
+}
 
 /** Apply saved language from DB to cookie when user has a valid locale. Returns true if locale was applied. */
 async function applyUserLocale(user: UserWithSettings | null): Promise<boolean> {
@@ -26,7 +56,7 @@ async function applyUserLocale(user: UserWithSettings | null): Promise<boolean> 
 
 interface AppContextType {
   user: Users | null;
-  session: Session | null;
+  session: ClientSession | null;
   isLoading: boolean;
   isBalanceRefetching: boolean;
   isAuthenticated: boolean;
@@ -43,7 +73,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<Users | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<ClientSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isBalanceRefetching, setIsBalanceRefetching] = useState(false);
 
@@ -176,14 +206,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       setIsLoading(true);
       authInProgress.current = true;
+      const { authContext, companionId } = resolveAuthContext();
       const res = await fetch("/api/auth/authenticate-user", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ initData: initData }),
+        body: JSON.stringify({
+          initData,
+          authContext,
+          ...(companionId ? { companionId } : {}),
+        }),
       });
 
       const data = await res.json();
+      if (!res.ok) {
+        setSessionStatus("invalid");
+        console.error(data.error || "Authentication failed");
+        return;
+      }
       setUser(data.user);
       setSession(data.session);
       setSessionStatus("valid");

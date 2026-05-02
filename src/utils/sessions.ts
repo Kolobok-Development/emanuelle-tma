@@ -1,5 +1,6 @@
 import { jwtVerify, SignJWT } from "jose";
 import { NextRequest } from "next/server";
+import { AppScope } from "@prisma/client";
 import { prisma } from "@/core/db/prisma";
 
 const key = new TextEncoder().encode(process.env.JWT_SECRET);
@@ -95,4 +96,15 @@ export async function getServerSession(request: NextRequest) {
   } catch {
     return null;
   }
+}
+
+/** Dedicated Mini App may only access the locked companion's resources. */
+export function sessionAllowsCompanionAccess(
+  session: NonNullable<Awaited<ReturnType<typeof getServerSession>>>,
+  companionId: string
+): boolean {
+  if (session.app_scope !== AppScope.dedicated) {
+    return true;
+  }
+  return session.locked_companion_id === companionId;
 }

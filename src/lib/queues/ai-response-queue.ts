@@ -12,6 +12,8 @@ export interface AIResponseJobData {
   username?: string;
   messageId?: number;
   dbChatId?: string;
+  /** Bot token for sendMessage (dedicated bot or hub). */
+  botToken?: string;
 }
 
 const MAX_JOB_DATA_SIZE = 100 * 1024; 
@@ -53,15 +55,16 @@ function truncateUserMessage(message: string, maxLength: number = 1000): string 
 }
 
 export async function queueAIResponse(
-  chatId: number, 
-  userMessage: string, 
-  companion: AICompanion, 
-  username?: string, 
-  messageId?: number, 
-  dbChatId?: string
+  chatId: number,
+  userMessage: string,
+  companion: AICompanion,
+  username?: string,
+  messageId?: number,
+  dbChatId?: string,
+  botToken?: string
 ): Promise<Job<AIResponseJobData>> {
   const truncatedMessage = truncateUserMessage(userMessage);
-  
+
   const jobData: AIResponseJobData = {
     chatId,
     userMessage: truncatedMessage,
@@ -72,6 +75,7 @@ export async function queueAIResponse(
     username: username?.substring(0, 100),
     messageId,
     dbChatId,
+    botToken,
   };
 
   validateJobDataSize(jobData);

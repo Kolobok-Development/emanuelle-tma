@@ -3,18 +3,19 @@ import { Worker, Job } from 'bullmq';
 import { createRedisConnection } from '../redis';
 import { ImageGenerationService } from '../image-generation';
 import { TelegramService } from '../telegram';
+import { getMainBotToken } from '../telegram-tenant';
 import { ImageGenerationJobData, imageGenerationDLQ, imageGenerationQueue } from './image-generation-queue';
 
 console.log('🚀 Starting Image Generation Queue Worker...');
 
-const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'XAI_API_KEY'];
+const requiredEnvVars = ['XAI_API_KEY'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
   console.error('💡 Please create a .env file with the required variables:');
-  console.error('   TELEGRAM_BOT_KEY=your_telegram_bot_token');
   console.error('   XAI_API_KEY=your_xai_api_key');
+  console.error('   Optional: TELEGRAM_MAIN_BOT_TOKEN for jobs without botToken');
   process.exit(1);
 }
 
@@ -23,12 +24,25 @@ console.log('✅ Environment variables loaded successfully');
 const imageGenerationWorker = new Worker(
   'image-generation',
   async (job: Job<ImageGenerationJobData>) => {
-    const { chatId, companionName, companionDescription, companionVisualAppearance, companionImageSeed, username, userPrompt } = job.data;
-    
+    const {
+      chatId,
+      companionName,
+      companionDescription,
+      companionVisualAppearance,
+      companionImageSeed,
+      username,
+      userPrompt,
+      botToken: jobBotToken,
+    } = job.data;
+    const botToken = jobBotToken ?? getMainBotToken();
+
     console.log(`Processing image generation job for chat ${chatId}, companion: ${companionName}`);
-    
+
     try {
-      await TelegramService.sendChatAction(chatId, 'upload_photo');
+      if (!botToken) {
+        throw new Error('No Telegram bot token on job or env');
+      }
+      await TelegramService.sendChatAction(chatId, 'upload_photo', botToken);
       
       console.log('Generating image for companion:', companionName);
       
@@ -49,7 +63,7 @@ const imageGenerationWorker = new Worker(
         
         const caption = `<b>${companionName}</b>\n\n📸 Here's a special image just for you! Hope you like it! 😊`;
         
-        const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption);
+        const result = await TelegramService.sendPhotoFromUrl(chatId, imageUrl, caption, 'HTML', botToken);
         
         if (result && result.ok) {
           console.log(`Image sent successfully for chat ${chatId}`);
@@ -65,7 +79,10 @@ const imageGenerationWorker = new Worker(
       console.error(`Error processing image generation job for chat ${chatId}:`, error);
       
       const errorMessage = `<b>${companionName}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
-      await TelegramService.sendMessage(chatId, errorMessage);
+      const fallbackToken = job.data.botToken ?? getMainBotToken();
+      if (fallbackToken) {
+        await TelegramService.sendMessage(chatId, errorMessage, 'HTML', undefined, fallbackToken);
+      }
       
       throw error;
     }

@@ -1,7 +1,8 @@
 import { prisma } from "@/core/db/prisma";
 import { getServerSession } from "@/utils/sessions";
-import { PaymentStatus } from "@prisma/client";
+import { PaymentStatus, AppScope } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { getBotTokenForCompanion, getMainBotToken } from "@/lib/telegram-tenant";
 
 
 export async function POST(request: NextRequest) {
@@ -45,10 +46,15 @@ export async function POST(request: NextRequest) {
 
         const { title, description, price_in_stars, price_in_usd } = offer;
 
-        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        let BOT_TOKEN: string | undefined;
+        if (session.app_scope === AppScope.dedicated && session.locked_companion_id) {
+            BOT_TOKEN = await getBotTokenForCompanion(session.locked_companion_id);
+        } else {
+            BOT_TOKEN = getMainBotToken();
+        }
 
         if (!BOT_TOKEN) {
-            globalThis?.logger?.error({}, 'TELEGRAM_BOT_TOKEN not found in environment');
+            globalThis?.logger?.error({}, 'Telegram bot token not found for session scope');
             return NextResponse.json(
                 { error: 'Telegram bot token not found' },
                 { status: 500 }

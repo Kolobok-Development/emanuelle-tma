@@ -223,4 +223,15 @@ export class ConversationService {
       throw error;
     }
   }
+
+  static async getOrCreateActiveChatForCompanion(
+    userId: string,
+    companionId: string
+  ): Promise<string> {
+    const existing = await this.getActiveChatByCompanion(userId, companionId);
+    if (existing) {
+      return existing;
+    }
+    return await this.createChatWithCompanion(userId, companionId);
+  }
 }

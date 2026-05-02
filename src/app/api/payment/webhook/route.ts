@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/core/db/prisma";
 import { PaymentStatus } from "@prisma/client";
-import { validateTelegramWebhook } from "@/utils/webhook";
-import { UserService } from "@/lib/user";
+import { resolveWebhookTenantFromRequest } from "@/utils/webhook";
 
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_KEY;
+async function sendTelegramMessage(chatId: number, text: string, botToken: string) {
+  if (!botToken) return;
 
-async function sendTelegramMessage(chatId: number, text: string) {
-  if (!BOT_TOKEN) return;
-  
-  await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
@@ -21,13 +18,17 @@ export async function POST(request: NextRequest) {
   globalThis?.logger?.info({}, 'Payment webhook received');
   
   try {
-    // Validate webhook authentication
-    if (!validateTelegramWebhook(request)) {
+    const tenant = await resolveWebhookTenantFromRequest(request);
+    if (!tenant) {
       globalThis?.logger?.warn({}, 'Webhook validation failed - Unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    globalThis?.logger?.info({}, 'Webhook authentication passed');
+    globalThis?.logger?.info(
+      { companionId: tenant.companionId ?? 'hub' },
+      'Payment webhook authentication passed'
+    );
 
+    const BOT_TOKEN = tenant.botToken;
     if (!BOT_TOKEN) {
       globalThis?.logger?.error({}, 'Bot token not configured');
       return NextResponse.json({ error: 'Bot token not configured' }, { status: 500 });
@@ -221,7 +222,8 @@ export async function POST(request: NextRequest) {
         await sendTelegramMessage(
           userId,
           `✅ Payment Successful!\n\n` +
-          `Receipt ID: \`${payment.telegram_payment_charge_id}\``
+          `Receipt ID: \`${payment.telegram_payment_charge_id}\``,
+          BOT_TOKEN
         );
 
         // Verify the update
@@ -271,7 +273,8 @@ export async function POST(request: NextRequest) {
       globalThis?.logger?.info({ userId: update.message.from.id }, 'Handling /paysupport command');
       await sendTelegramMessage(
         update.message.from.id,
-        '🛟 For payment support, contact support team'
+        '🛟 For payment support, contact support team',
+        BOT_TOKEN
       );
       return NextResponse.json({ ok: true });
     }

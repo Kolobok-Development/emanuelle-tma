@@ -1,4 +1,5 @@
 import { telegramCircuitBreaker } from './circuit-breaker';
+import { getMainBotToken } from './telegram-tenant';
 
 export interface TelegramMessage {
   message_id: number;
@@ -24,26 +25,31 @@ export interface InlineKeyboardMarkup {
   inline_keyboard: InlineKeyboardButton[][];
 }
 
+function resolveToken(explicit?: string): string | undefined {
+  return explicit ?? getMainBotToken();
+}
+
 export class TelegramService {
   private static readonly BASE_URL = 'https://api.telegram.org/bot';
-  private static readonly botToken = process.env.TELEGRAM_BOT_KEY;
 
   static async sendMessage(
-    chatId: number, 
-    text: string, 
+    chatId: number,
+    text: string,
     parseMode: 'HTML' | 'Markdown' = 'HTML',
-    replyMarkup?: InlineKeyboardMarkup
+    replyMarkup?: InlineKeyboardMarkup,
+    botToken?: string
   ): Promise<TelegramResponse | null> {
-    if (!this.botToken) {
-      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+    const token = resolveToken(botToken);
+    if (!token) {
+      console.error('Telegram bot token not configured');
       return null;
     }
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         chat_id: chatId,
         text: text,
-        parse_mode: parseMode
+        parse_mode: parseMode,
       };
 
       if (replyMarkup) {
@@ -51,16 +57,16 @@ export class TelegramService {
       }
 
       const data = await telegramCircuitBreaker.execute(async () => {
-        const fetchResponse = await fetch(`${this.BASE_URL}${this.botToken}/sendMessage`, {
+        const fetchResponse = await fetch(`${this.BASE_URL}${token}/sendMessage`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         return fetchResponse.json();
       });
-      
+
       if (!data.ok) {
         console.error('Failed to send Telegram message:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
@@ -69,42 +75,58 @@ export class TelegramService {
       return data;
     } catch (error: any) {
       console.error('Error sending Telegram message:', error);
-      
+
       if (error.message?.includes('Circuit breaker is OPEN')) {
         console.warn('Telegram API circuit breaker is OPEN - service temporarily unavailable');
         return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
       }
-      
+
       if (error.message?.includes('Operation timeout')) {
         console.warn('Telegram API request timed out');
         return { ok: false, error_code: 504, description: 'Request timeout' };
       }
-      
+
       return null;
     }
   }
 
-  static async sendChatAction(chatId: number, action: 'typing' | 'upload_photo' | 'record_video' | 'upload_video' | 'record_voice' | 'upload_voice' | 'upload_document' | 'choose_sticker' | 'find_location' | 'record_video_note' | 'upload_video_note'): Promise<TelegramResponse | null> {
-    if (!this.botToken) {
-      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+  static async sendChatAction(
+    chatId: number,
+    action:
+      | 'typing'
+      | 'upload_photo'
+      | 'record_video'
+      | 'upload_video'
+      | 'record_voice'
+      | 'upload_voice'
+      | 'upload_document'
+      | 'choose_sticker'
+      | 'find_location'
+      | 'record_video_note'
+      | 'upload_video_note',
+    botToken?: string
+  ): Promise<TelegramResponse | null> {
+    const token = resolveToken(botToken);
+    if (!token) {
+      console.error('Telegram bot token not configured');
       return null;
     }
 
     try {
       const data = await telegramCircuitBreaker.execute(async () => {
-        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendChatAction`, {
+        const response = await fetch(`${this.BASE_URL}${token}/sendChatAction`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             chat_id: chatId,
-            action: action
-          })
+            action: action,
+          }),
         });
         return response.json();
       });
-      
+
       if (!data.ok) {
         console.error('Failed to send chat action:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
@@ -113,25 +135,31 @@ export class TelegramService {
       return data;
     } catch (error: any) {
       console.error('Error sending chat action:', error);
-      
+
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return null;
       }
-      
+
       return null;
     }
   }
 
-  static async answerCallbackQuery(callbackQueryId: string, text?: string, showAlert: boolean = false): Promise<TelegramResponse | null> {
-    if (!this.botToken) {
-      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+  static async answerCallbackQuery(
+    callbackQueryId: string,
+    text?: string,
+    showAlert: boolean = false,
+    botToken?: string
+  ): Promise<TelegramResponse | null> {
+    const token = resolveToken(botToken);
+    if (!token) {
+      console.error('Telegram bot token not configured');
       return null;
     }
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         callback_query_id: callbackQueryId,
-        show_alert: showAlert
+        show_alert: showAlert,
       };
 
       if (text) {
@@ -139,16 +167,16 @@ export class TelegramService {
       }
 
       const data = await telegramCircuitBreaker.execute(async () => {
-        const response = await fetch(`${this.BASE_URL}${this.botToken}/answerCallbackQuery`, {
+        const response = await fetch(`${this.BASE_URL}${token}/answerCallbackQuery`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         return response.json();
       });
-      
+
       if (!data.ok) {
         console.error('Failed to answer callback query:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
@@ -157,23 +185,25 @@ export class TelegramService {
       return data;
     } catch (error: any) {
       console.error('Error answering callback query:', error);
-      
+
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return null;
       }
-      
+
       return null;
     }
   }
 
   static async sendPhoto(
-    chatId: number, 
-    photo: Buffer, 
+    chatId: number,
+    photo: Buffer,
     caption?: string,
-    parseMode: 'HTML' | 'Markdown' = 'HTML'
+    parseMode: 'HTML' | 'Markdown' = 'HTML',
+    botToken?: string
   ): Promise<TelegramResponse | null> {
-    if (!this.botToken) {
-      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+    const token = resolveToken(botToken);
+    if (!token) {
+      console.error('Telegram bot token not configured');
       return null;
     }
 
@@ -183,13 +213,13 @@ export class TelegramService {
       formData.append('photo', new Blob([new Uint8Array(photo)], { type: 'image/jpeg' }), 'image.jpg');
 
       const data = await telegramCircuitBreaker.execute(async () => {
-        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+        const response = await fetch(`${this.BASE_URL}${token}/sendPhoto`, {
           method: 'POST',
-          body: formData
+          body: formData,
         });
         return response.json();
       });
-      
+
       if (!data.ok) {
         console.error('Failed to send photo:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
@@ -198,48 +228,49 @@ export class TelegramService {
       return data;
     } catch (error: any) {
       console.error('Error sending photo:', error);
-      
+
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
       }
-      
+
       return null;
     }
   }
 
   static async sendPhotoFromUrl(
-    chatId: number, 
-    photoUrl: string, 
+    chatId: number,
+    photoUrl: string,
     caption?: string,
-    parseMode: 'HTML' | 'Markdown' = 'HTML'
+    parseMode: 'HTML' | 'Markdown' = 'HTML',
+    botToken?: string
   ): Promise<TelegramResponse | null> {
-    if (!this.botToken) {
-      console.error('TELEGRAM_BOT_KEY not found in environment variables');
+    const token = resolveToken(botToken);
+    if (!token) {
+      console.error('Telegram bot token not configured');
       return null;
     }
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         chat_id: chatId,
-        photo: photoUrl
+        photo: photoUrl,
       };
 
       if (caption) {
-        // payload.caption = caption;
         payload.parse_mode = parseMode;
       }
 
       const data = await telegramCircuitBreaker.execute(async () => {
-        const response = await fetch(`${this.BASE_URL}${this.botToken}/sendPhoto`, {
+        const response = await fetch(`${this.BASE_URL}${token}/sendPhoto`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload),
         });
         return response.json();
       });
-      
+
       if (!data.ok) {
         console.error('Failed to send photo from URL:', data);
         return { ok: false, error_code: data.error_code, description: data.description };
@@ -248,13 +279,12 @@ export class TelegramService {
       return data;
     } catch (error: any) {
       console.error('Error sending photo from URL:', error);
-      
+
       if (error.message?.includes('Circuit breaker is OPEN') || error.message?.includes('Operation timeout')) {
         return { ok: false, error_code: 503, description: 'Telegram service temporarily unavailable' };
       }
-      
+
       return null;
     }
   }
 }
-

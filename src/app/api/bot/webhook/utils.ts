@@ -1,9 +1,7 @@
 import { redis } from '@/lib/redis';
 
-
-export const MAX_PAYLOAD_SIZE = 1024 * 1024; 
+export const MAX_PAYLOAD_SIZE = 1024 * 1024;
 export const IDEMPOTENCY_TTL = 24 * 60 * 60;
-export const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_BOT_KEY;
 
 export async function isMessageProcessed(chatId: number, messageId: number): Promise<boolean> {
   const key = `webhook:processed:${chatId}:${messageId}`;
@@ -11,23 +9,29 @@ export async function isMessageProcessed(chatId: number, messageId: number): Pro
   return result === null;
 }
 
-export async function sendTelegramMessage(chatId: number, text: string): Promise<void> {
-  if (!BOT_TOKEN) {
+export async function sendTelegramMessage(
+  chatId: number,
+  text: string,
+  botToken: string
+): Promise<void> {
+  if (!botToken) {
     globalThis?.logger?.warn({ chatId }, 'Bot token not configured, cannot send message');
     return;
   }
-  
+
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown' }),
     });
   } catch (error) {
-    globalThis?.logger?.error({ 
-      error: error instanceof Error ? error.message : String(error),
-      chatId
-    }, 'Error sending Telegram message');
+    globalThis?.logger?.error(
+      {
+        error: error instanceof Error ? error.message : String(error),
+        chatId,
+      },
+      'Error sending Telegram message'
+    );
   }
 }
-

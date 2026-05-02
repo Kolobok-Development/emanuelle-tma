@@ -118,6 +118,27 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
 
+        const appScope = (payload.app_scope as string) || 'hub';
+        const lockedCompanionId = payload.locked_companion_id as string | undefined;
+        if (appScope === 'dedicated' && lockedCompanionId) {
+            const redirect = request.nextUrl.clone();
+            if (
+                pathname === '/' ||
+                pathname === '/dashboard' ||
+                pathname === '/tasks'
+            ) {
+                redirect.pathname = `/companion/${lockedCompanionId}`;
+                return NextResponse.redirect(redirect);
+            }
+            if (
+                pathname.startsWith('/companion/') &&
+                !pathname.startsWith(`/companion/${lockedCompanionId}`)
+            ) {
+                redirect.pathname = `/companion/${lockedCompanionId}`;
+                return NextResponse.redirect(redirect);
+            }
+        }
+
         globalThis?.logger?.debug({ 
             pathname, 
             userId: payload.sub,
