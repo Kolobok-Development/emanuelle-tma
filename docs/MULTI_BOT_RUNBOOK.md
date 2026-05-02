@@ -47,3 +47,12 @@ Queue jobs carry `botToken` for AI replies. If missing, workers fall back to `ge
 ## Logging
 
 Never log raw bot tokens. Use `companion_id`, `bot_username`, or `hub` in structured logs only.
+
+## Automated test helpers
+
+1. Seed companions: `npm run seed:companions`
+2. Seed one `CompanionTelegramBot` row (env vars optional — see [src/scripts/seed-companion-telegram-bot.ts](src/scripts/seed-companion-telegram-bot.ts)): `npm run seed:companion-bot`
+3. With the app running and hub webhook secret set on the server: `TEST_BASE_URL=http://localhost:3000 npm run test:multibot-webhooks`  
+   Optional: `TEST_COMPANION_WEBHOOK_SECRET=<same as row>` for companion POST test.
+4. API smoke (unauthenticated get-all): `npm run test:multibot-api-smoke`
+5. Full Telegram flows: [docs/MULTI_BOT_E2E_CHECKLIST.md](MULTI_BOT_E2E_CHECKLIST.md)
