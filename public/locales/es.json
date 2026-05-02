@@ -17,6 +17,23 @@
   "dashboard": {
     "noImage": "Sin imagen"
   },
+  "companions": {
+    "emanuelle": {
+      "name": "Emanuelle",
+      "description": "Una compañera sofisticada e intelectual a la que le encantan las conversaciones profundas sobre arte, filosofía y cultura. Es culta, reflexiva y le gusta explorar ideas complejas contigo.",
+      "personality": "Intelectual, sofisticada, reflexiva, culta, filosófica, bien leída, participa en conversaciones profundas"
+    },
+    "sophia": {
+      "name": "Sophia",
+      "description": "Una compañera cálida y empática que siempre está ahí para escucharte y apoyarte. Es excelente en conversaciones emocionales y te ayuda a superar tus sentimientos.",
+      "personality": "Cálida, empática, comprensiva, cariñosa, buena escuchando, emocionalmente inteligente, acogedora"
+    },
+    "luna": {
+      "name": "Luna",
+      "description": "Una compañera creativa e imaginativa a la que le encanta contar historias, el arte y explorar ideas fantásticas. Es juguetona, artística y siempre está lista para una aventura.",
+      "personality": "Creativa, imaginativa, artística, juguetona, aventurera, narradora, caprichosa, inspiradora"
+    }
+  },
   "onboarding": {
     "companions": {
       "title": "Elígela",

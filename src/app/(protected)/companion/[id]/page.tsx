@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import { fetcher } from '@/utils/fetcher';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useCompanionTranslation } from '@/lib/companion-i18n';
 
 import { miniApp } from '@tma.js/sdk-react';
 
@@ -16,7 +17,7 @@ import { miniApp } from '@tma.js/sdk-react';
 type AICompanion = {
   id: string;
   name: string;
-  avatar: string;
+  avatar: string | string[];
   description: string;
   personality: string;
 };
@@ -39,14 +40,26 @@ export default function CompanionPage() {
     return data.companions.find((c) => c.id === companionId);
   }, [data, companionId]);
 
+  const { name, description, personality } = useCompanionTranslation(companion);
+
   const tags: string[] = React.useMemo(() => {
-    if (!companion?.personality) return [];
-    return companion.personality
+    if (!personality) return [];
+    return personality
       .split(/[.,|]/)
-      .map((t) => t.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
       .slice(0, 5);
-  }, [companion]);
+  }, [personality]);
+
+  const avatarUrl = companion
+    ? Array.isArray(companion.avatar)
+      ? companion.avatar[0]
+      : companion.avatar
+    : undefined;
+
+  // #region agent log
+  if (typeof window !== 'undefined') fetch('http://127.0.0.1:7244/ingest/45d7ac2b-2eca-4e94-9301-e674e0d8db0e',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'companion/[id]/page.tsx',message:'avatar src',data:{companionId:companion?.id,avatarType:typeof companion?.avatar,isAvatarArray:Array.isArray(companion?.avatar),avatarUrl,avatarUrlType:typeof avatarUrl,avatarUrlLength:typeof avatarUrl==='string'?avatarUrl.length:0},timestamp:Date.now(),hypothesisId:'C-E'})}).catch(()=>{});
+  // #endregion
 
   const goToChat = async () => {
     setIsChatInitiated(true)
@@ -72,7 +85,7 @@ export default function CompanionPage() {
         <div className="bg-primary rounded-2xl shadow-[0_0_40px_0_color-mix(in_oklch,var(--primary)_60%,transparent)]">
           <div className="px-6 py-4 text-center">
             <h1 className="text-3xl sm:text-4xl font-bold tracking-[0.25em] uppercase text-white">
-              {companion?.name || (isLoading ? '...' : t('companion.title'))}
+              {companion ? name : (isLoading ? '...' : t('companion.title'))}
             </h1>
           </div>
         </div>
@@ -84,10 +97,10 @@ export default function CompanionPage() {
           <div className="w-full">
             {/* Image */}
             <div className="relative w-full h-[350px]">
-              {companion?.avatar ? (
+              {avatarUrl ? (
                 <Image
-                  src={companion.avatar}
-                  alt={companion.name}
+                  src={avatarUrl}
+                  alt={name}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 600px"
@@ -121,7 +134,7 @@ export default function CompanionPage() {
         </div>
         <CardContent className="pt-0 px-5 pb-6">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            {companion?.description || (isLoading ? t('companion.loadingDescription') : t('companion.noDescription'))}
+            {companion ? description : (isLoading ? t('companion.loadingDescription') : t('companion.noDescription'))}
           </p>
         </CardContent>
       </Card>

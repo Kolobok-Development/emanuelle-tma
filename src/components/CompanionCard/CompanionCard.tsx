@@ -3,11 +3,14 @@
 import { AICompanion } from "@prisma/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardTitle } from "../ui/card";
+import { Card, CardContent, CardTitle } from "../ui/card";
+import { useCompanionTranslation } from "@/lib/companion-i18n";
 
 // Companion Card Component - Tinder-style profile card
 export function CompanionCard({ companion, onClick }: { companion: AICompanion; onClick: () => void }) {
     const [imageError, setImageError] = useState(false);
+    const { name } = useCompanionTranslation(companion);
+    const avatarUrl = Array.isArray(companion.avatar) ? companion.avatar[0] : companion.avatar;
 
     return (
       <div className="relative cursor-pointer" onClick={onClick}>
@@ -22,10 +25,10 @@ export function CompanionCard({ companion, onClick }: { companion: AICompanion; 
           style={{ borderColor: 'rgba(236, 72, 153, 0.7)' }}
         >
           {/* Background Image */}
-          {!imageError && companion.avatar ? (
+          {!imageError && avatarUrl ? (
             <img
-              src={companion.avatar}
-              alt={companion.name}
+              src={avatarUrl}
+              alt={name}
               className="absolute inset-0 m-0 h-full w-full rounded-none object-cover"
               onError={() => setImageError(true)}
             />
@@ -37,7 +40,7 @@ export function CompanionCard({ companion, onClick }: { companion: AICompanion; 
           {/* Content - Name at bottom left */}
           <CardContent className="relative z-10 flex flex-col items-start justify-end px-3 py-3 w-full">
             <CardTitle className="text-lg font-bold text-white drop-shadow-lg">
-              {companion.name}
+              {name}
             </CardTitle>
           </CardContent>
         </Card>

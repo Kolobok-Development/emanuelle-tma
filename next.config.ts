@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
         hostname: 'images.unsplash.com',
         pathname: '**',
       },
+      {
+        protocol: 'https',
+        hostname: 's3.twcstorage.ru',
+        pathname: '**',
+      },
     ],
   },
 };

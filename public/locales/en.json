@@ -17,6 +17,23 @@
   "dashboard": {
     "noImage": "No image"
   },
+  "companions": {
+    "emanuelle": {
+      "name": "Emanuelle",
+      "description": "A sophisticated and intellectual companion who loves deep conversations about art, philosophy, and culture. She's well-read, thoughtful, and enjoys exploring complex ideas with you.",
+      "personality": "Intellectual, sophisticated, thoughtful, cultured, philosophical, well-read, engaging in deep conversations"
+    },
+    "sophia": {
+      "name": "Sophia",
+      "description": "A warm and empathetic companion who's always there to listen and support you. She's great at emotional conversations and helping you work through your feelings.",
+      "personality": "Warm, empathetic, supportive, caring, good listener, emotionally intelligent, nurturing"
+    },
+    "luna": {
+      "name": "Luna",
+      "description": "A creative and imaginative companion who loves storytelling, art, and exploring fantastical ideas. She's playful, artistic, and always ready for an adventure.",
+      "personality": "Creative, imaginative, artistic, playful, adventurous, storytelling, whimsical, inspiring"
+    }
+  },
   "onboarding": {
     "companions": {
       "title": "Choose her",
