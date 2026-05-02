@@ -7,6 +7,7 @@ import { ConversationService } from '../conversation';
 import { AIResponseJobData, aiResponseDLQ, aiResponseQueue } from './ai-response-queue';
 import { prisma } from '@/core/db/prisma';
 import { trackQueueJob, trackAIRequest } from '../metrics-helpers';
+import { getMainBotToken } from '../telegram-tenant';
 
 function getAIBusyMessage(languageCode?: string): string {
   const lang = languageCode?.toLowerCase() || 'en';
@@ -28,15 +29,15 @@ function getAIBusyMessage(languageCode?: string): string {
 
 console.log('🚀 Starting AI Response Queue Worker...');
 
-const requiredEnvVars = ['TELEGRAM_BOT_KEY', 'XAI_API_KEY', 'DATABASE_URL'];
+const requiredEnvVars = ['XAI_API_KEY', 'DATABASE_URL'];
 const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:', missingEnvVars.join(', '));
   console.error('💡 Please create a .env file with the required variables:');
-  console.error('   TELEGRAM_BOT_KEY=your_telegram_bot_token');
   console.error('   XAI_API_KEY=your_xai_api_key');
   console.error('   DATABASE_URL=your_postgresql_connection_string');
+  console.error('   Optional fallback: TELEGRAM_MAIN_BOT_TOKEN / TELEGRAM_BOT_KEY for jobs without botToken');
   process.exit(1);
 }
 
@@ -45,7 +46,17 @@ console.log('✅ Environment variables loaded successfully');
 const aiResponseWorker = new Worker(
   'ai-response',
   async (job: Job<AIResponseJobData>) => {
-    const { chatId, companionName, companionPersonality, companionDescription, username, dbChatId, companionId } = job.data;
+    const {
+      chatId,
+      companionName,
+      companionPersonality,
+      companionDescription,
+      username,
+      dbChatId,
+      companionId,
+      botToken: jobBotToken,
+    } = job.data;
+    const botToken = jobBotToken ?? getMainBotToken();
     const jobStartTime = Date.now();
     const waitTime = job.timestamp ? (Date.now() - job.timestamp) / 1000 : 0;
     
@@ -65,7 +76,11 @@ const aiResponseWorker = new Worker(
 
       console.log('Generating AI response for:', companionName, 'with context length:', conversationHistory.length);
       
-      await TelegramService.sendChatAction(chatId, 'typing');
+      if (!botToken) {
+        throw new Error('No Telegram bot token on job or env');
+      }
+
+      await TelegramService.sendChatAction(chatId, 'typing', botToken);
       
       const aiStartTime = Date.now();
       const aiResponse = await AIService.generateCompanionResponse(
@@ -107,7 +122,7 @@ const aiResponseWorker = new Worker(
       }
 
 
-      await TelegramService.sendMessage(chatId, responseMessage, 'HTML'/*, actionButton*/);
+      await TelegramService.sendMessage(chatId, responseMessage, 'HTML', undefined, botToken);
       
       // Note: Energy is already deducted in the webhook before queuing the job
       // No need to decrement here to avoid double deduction
@@ -151,7 +166,10 @@ const aiResponseWorker = new Worker(
       }
       
       const errorMessage = `<b>${companionName}</b>\n\n${getAIBusyMessage(userLanguage)}`;
-      await TelegramService.sendMessage(chatId, errorMessage);
+      const fallbackToken = job.data.botToken ?? getMainBotToken();
+      if (fallbackToken) {
+        await TelegramService.sendMessage(chatId, errorMessage, 'HTML', undefined, fallbackToken);
+      }
       
       // Track metrics for failed job
       const jobDuration = (Date.now() - jobStartTime) / 1000;

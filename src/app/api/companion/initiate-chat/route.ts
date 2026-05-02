@@ -5,8 +5,9 @@ import { UserService } from "@/lib/user";
 import { CompanionService } from "@/lib/companions";
 import { CacheService } from "@/lib/cache";
 import { redis } from "@/lib/redis";
-import { getServerSession } from "@/utils/sessions";
+import { getServerSession, sessionAllowsCompanionAccess } from "@/utils/sessions";
 import { NextRequest, NextResponse } from "next/server";
+import { getBotTokenForCompanion, getMainBotToken } from "@/lib/telegram-tenant";
 
 
 function getInitialGreeting(languageCode?: string): string {
@@ -38,7 +39,20 @@ export async function POST(request: NextRequest) {
         }
         const userId = session.user.id;
         const { companionId } = await request.json();
-        
+
+        if (!sessionAllowsCompanionAccess(session, companionId)) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        const botToken =
+            (await getBotTokenForCompanion(companionId)) ?? getMainBotToken();
+        if (!botToken) {
+            return NextResponse.json(
+                { error: 'Telegram bot not configured for this companion' },
+                { status: 500 }
+            );
+        }
+
         const user = await prisma.users.findUnique({
             where: { id: userId },
             include: {
@@ -148,7 +162,8 @@ export async function POST(request: NextRequest) {
             selectedCompanion,
             user.username || undefined,
             undefined,
-            dbChatId
+            dbChatId,
+            botToken
         );
 
         globalThis?.logger?.info({ 

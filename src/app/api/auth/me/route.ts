@@ -57,7 +57,9 @@ export async function GET(request: NextRequest) {
               onboarding_completed_at: session.user.onboarding_completed_at?.toISOString() ?? null,
             },
             session: {
-              expires_at: session.expires_at
+              expires_at: session.expires_at,
+              app_scope: session.app_scope,
+              locked_companion_id: session.locked_companion_id,
             }
           });
 

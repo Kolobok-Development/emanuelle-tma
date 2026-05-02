@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/core/db/prisma';
 import { redis } from '@/lib/redis';
 import axios from 'axios';
+import { getMainBotToken } from '@/lib/telegram-tenant';
 
 interface HealthCheckResult {
   status: 'ok' | 'error';
@@ -46,11 +47,11 @@ async function checkRedis(): Promise<HealthCheckResult> {
 async function checkTelegram(): Promise<HealthCheckResult> {
   const startTime = Date.now();
   try {
-    const botToken = process.env.TELEGRAM_BOT_KEY;
+    const botToken = getMainBotToken();
     if (!botToken) {
       return {
         status: 'error',
-        message: 'TELEGRAM_BOT_KEY not configured',
+        message: 'Hub Telegram bot token not configured',
         responseTime: Date.now() - startTime,
       };
     }

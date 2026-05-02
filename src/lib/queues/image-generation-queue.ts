@@ -12,6 +12,7 @@ export interface ImageGenerationJobData {
   username?: string;
   userPrompt?: string;
   messageId?: number;
+  botToken?: string;
 }
 
 const MAX_JOB_DATA_SIZE = 50 * 1024; 

@@ -4,6 +4,7 @@ import { createRedisConnection } from "../redis";
 import { AIService, AIMessage } from "../ai";
 import { ImageGenerationService } from "../image-generation";
 import { TelegramService, InlineKeyboardMarkup } from "../telegram";
+import { getMainBotToken } from "../telegram-tenant";
 import { ConversationService } from "../conversation";
 import {
   AIResponseJobData,
@@ -28,7 +29,7 @@ console.log(
   '💡 Tip: Use "npm run queue:worker:ai" and "npm run queue:worker:image" for independent scaling'
 );
 
-const requiredEnvVars = ["TELEGRAM_BOT_KEY", "XAI_API_KEY", "DATABASE_URL"];
+const requiredEnvVars = ["XAI_API_KEY", "DATABASE_URL"];
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
@@ -37,9 +38,11 @@ if (missingEnvVars.length > 0) {
     missingEnvVars.join(", ")
   );
   console.error("💡 Please create a .env file with the required variables:");
-  console.error("   TELEGRAM_BOT_KEY=your_telegram_bot_token");
   console.error("   XAI_API_KEY=your_xai_api_key");
   console.error("   DATABASE_URL=your_postgresql_connection_string");
+  console.error(
+    "   Optional: TELEGRAM_MAIN_BOT_TOKEN / TELEGRAM_BOT_KEY for jobs without botToken"
+  );
   process.exit(1);
 }
 
@@ -55,7 +58,11 @@ const aiResponseWorker = new Worker(
       companionDescription,
       username,
       dbChatId,
+      companionId,
+      botToken: jobBotToken,
     } = job.data;
+    const descriptionForAi = companionDescription || "";
+    const botToken = jobBotToken ?? getMainBotToken();
 
     console.log(
       `Processing AI response job for chat ${chatId}, companion: ${companionName}`
@@ -86,14 +93,19 @@ const aiResponseWorker = new Worker(
         conversationHistory.length
       );
 
-      await TelegramService.sendChatAction(chatId, "typing");
+      if (!botToken) {
+        throw new Error("No Telegram bot token on job or env");
+      }
+
+      await TelegramService.sendChatAction(chatId, "typing", botToken);
 
       const aiResponse = await AIService.generateCompanionResponse(
         conversationHistory,
         companionName,
         companionPersonality,
-        "",
-        username
+        descriptionForAi,
+        username,
+        companionId
       );
 
       if (aiResponse.error) {
@@ -151,7 +163,8 @@ const aiResponseWorker = new Worker(
         chatId,
         responseMessage,
         "HTML",
-        //actionButton
+        undefined,
+        botToken
       );
 
       console.log(`AI response sent successfully for chat ${chatId}`);
@@ -164,7 +177,10 @@ const aiResponseWorker = new Worker(
       );
 
       const errorMessage = `<b>${companionName}</b>\n\nSorry, I'm having trouble thinking right now. Please try again in a moment!`;
-      await TelegramService.sendMessage(chatId, errorMessage);
+      const fallbackToken = job.data.botToken ?? getMainBotToken();
+      if (fallbackToken) {
+        await TelegramService.sendMessage(chatId, errorMessage, "HTML", undefined, fallbackToken);
+      }
 
       throw error;
     }
@@ -232,14 +248,19 @@ const imageGenerationWorker = new Worker(
       companionVisualAppearance,
       companionImageSeed,
       userPrompt,
+      botToken: imageJobBotToken,
     } = job.data;
+    const imageBotToken = imageJobBotToken ?? getMainBotToken();
 
     console.log(
       `Processing image generation job for chat ${chatId}, companion: ${companionName}`
     );
 
     try {
-      await TelegramService.sendChatAction(chatId, "upload_photo");
+      if (!imageBotToken) {
+        throw new Error("No Telegram bot token on job or env");
+      }
+      await TelegramService.sendChatAction(chatId, "upload_photo", imageBotToken);
 
       // console.log('Generating image for companion:', companion.name);
 
@@ -267,7 +288,9 @@ const imageGenerationWorker = new Worker(
         const result = await TelegramService.sendPhotoFromUrl(
           chatId,
           imageUrl,
-          caption
+          caption,
+          "HTML",
+          imageBotToken
         );
 
         if (result && result.ok) {
@@ -286,7 +309,10 @@ const imageGenerationWorker = new Worker(
       );
 
       const errorMessage = `<b>${companionName}</b>\n\n😔 Sorry, I had trouble creating an image right now. Please try again later!`;
-      await TelegramService.sendMessage(chatId, errorMessage);
+      const fallbackImg = job.data.botToken ?? getMainBotToken();
+      if (fallbackImg) {
+        await TelegramService.sendMessage(chatId, errorMessage, "HTML", undefined, fallbackImg);
+      }
 
       throw error;
     }

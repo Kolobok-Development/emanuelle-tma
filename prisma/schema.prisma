@@ -39,12 +39,14 @@ model UserSettings {
 }
 
 model Session {
-  id         String   @id @default(uuid())
-  user_id    String
-  token      String   @unique
-  expires_at DateTime
-  created_at DateTime @default(now())
-  user       Users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  id                  String    @id @default(uuid())
+  user_id             String
+  token               String    @unique
+  expires_at          DateTime
+  created_at          DateTime  @default(now())
+  app_scope           AppScope  @default(hub)
+  locked_companion_id String?
+  user                Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
 model Chat {
@@ -70,13 +72,13 @@ model Message {
 }
 
 model AICompanion {
-  id               String               @id @default(uuid())
-  name             String               @unique
+  id               String                 @id @default(uuid())
+  name             String                 @unique
   description      String
   personality      String
-  energyCost       Int                  @default(1)
-  isActive         Boolean              @default(true)
-  created_at       DateTime             @default(now())
+  energyCost       Int                    @default(1)
+  isActive         Boolean                @default(true)
+  created_at       DateTime               @default(now())
   updated_at       DateTime
   imageSeed        String?
   visualAppearance String?
@@ -84,6 +86,19 @@ model AICompanion {
   systemPrompt     Json
   avatar           String[]
   selections       CompanionSelection[]
+  telegramBot      CompanionTelegramBot?
+}
+
+/// 1:1 dedicated Telegram bot for a companion (DM + Mini App signing + webhook secret).
+model CompanionTelegramBot {
+  id              String      @id @default(uuid())
+  companion_id    String      @unique
+  bot_username    String      @unique
+  webhook_secret  String      @unique
+  bot_token       String
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  companion       AICompanion @relation(fields: [companion_id], references: [id], onDelete: Cascade)
 }
 
 model CompanionSelection {
@@ -160,6 +175,11 @@ model PromocodeUsage {
   @@index([promocode_id])
   @@index([user_id])
   @@index([used_at])
+}
+
+enum AppScope {
+  hub
+  dedicated
 }
 
 enum ChatRole {
