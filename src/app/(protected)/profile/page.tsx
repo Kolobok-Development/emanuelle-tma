@@ -139,9 +139,9 @@ export default function Profile() {
   };
 
   return (
-    <div className="relative flex flex-col px-4 py-6 gap-6">
+    <div className="relative flex flex-1 flex-col items-center px-4 py-6 gap-6 w-full">
       {/* Promocode Section */}
-      <Card className="bg-muted-dark border-border">
+      <Card className="bg-muted-dark border-border w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-white text-lg font-bold">{t('profile.promocode.title')}</CardTitle>
           <CardDescription className="text-white/70 text-sm">
@@ -175,7 +175,7 @@ export default function Profile() {
       </Card>
 
       {/* Username Section */}
-      <Card className="bg-muted-dark border-border">
+      <Card className="bg-muted-dark border-border w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-white text-lg font-bold">{t('profile.username.title')}</CardTitle>
           <CardDescription className="text-white/70 text-sm">
@@ -209,7 +209,7 @@ export default function Profile() {
       </Card>
 
       {/* Language Section */}
-      <Card className="bg-muted-dark border-border">
+      <Card className="bg-muted-dark border-border w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-white text-lg font-bold">{t('profile.language.title')}</CardTitle>
           <CardDescription className="text-white/70 text-sm">
